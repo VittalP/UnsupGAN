@@ -5,7 +5,7 @@ import numpy as np
 from progressbar import ETA, Bar, Percentage, ProgressBar
 from infogan.misc.distributions import Bernoulli, Gaussian, Categorical
 import sys
-
+from infogan.misc.utils import save_images
 TINY = 1e-8
 
 
@@ -50,6 +50,7 @@ class InfoGANTrainer(object):
         with pt.defaults_scope(phase=pt.Phase.train):
             z_var = self.model.latent_dist.sample_prior(self.batch_size)
             fake_x, _ = self.model.generate(z_var)
+            self.sample_x, _ = self.model.generate(z_var)
             real_d, _, _, _ = self.model.discriminate(input_tensor)
             fake_d, _, fake_reg_z_dist_info, _ = self.model.discriminate(fake_x)
 
@@ -243,6 +244,14 @@ class InfoGANTrainer(object):
                         snapshot_name = "%s_%s" % (self.exp_name, str(counter))
                         fn = saver.save(sess, "%s/%s.ckpt" % (self.checkpoint_dir, snapshot_name))
                         print("Model saved in file: %s" % fn)
+
+                    # Save samples
+                    if counter % 100 == 0:
+                        samples = sess.run(self.sample_x, feed_dict)
+                        samples = samples[:64,...]
+                        save_images(samples, [8, 8],
+                                './samples/train_{:02d}_{:04d}.png'.format(epoch, counter))
+                        # print("[Sample] d_loss: %.8f, g_loss: %.8f" % (discriminator_loss, generator_loss))
 
                 x, _ = self.dataset.train.next_batch(self.batch_size)
 
