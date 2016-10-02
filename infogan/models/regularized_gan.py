@@ -6,7 +6,7 @@ from infogan.misc.custom_ops import leaky_rectify
 
 
 class RegularizedGAN(object):
-    def __init__(self, output_dist, latent_spec, batch_size, image_shape, network_type):
+    def __init__(self, output_dist, latent_spec, is_reg, batch_size, image_shape, network_type):
         """
         :type output_dist: Distribution
         :type latent_spec: list[(Distribution, bool)]
@@ -15,6 +15,7 @@ class RegularizedGAN(object):
         """
         self.output_dist = output_dist
         self.latent_spec = latent_spec
+        self.is_reg = is_reg
         self.latent_dist = Product([x for x, _ in latent_spec])
         self.reg_latent_dist = Product([x for x, reg in latent_spec if reg])
         self.nonreg_latent_dist = Product([x for x, reg in latent_spec if not reg])
@@ -41,12 +42,13 @@ class RegularizedGAN(object):
                      fc_batch_norm().
                      apply(leaky_rectify))
                 self.discriminator_template = shared_template.custom_fully_connected(1)
-                self.encoder_template = \
-                    (shared_template.
-                     custom_fully_connected(128).
-                     fc_batch_norm().
-                     apply(leaky_rectify).
-                     custom_fully_connected(self.reg_latent_dist.dist_flat_dim))
+                if self.is_reg:
+                    self.encoder_template = \
+                        (shared_template.
+                         custom_fully_connected(128).
+                         fc_batch_norm().
+                         apply(leaky_rectify).
+                         custom_fully_connected(self.reg_latent_dist.dist_flat_dim))
 
             with tf.variable_scope("g_net"):
                 self.generator_template = \
@@ -69,9 +71,12 @@ class RegularizedGAN(object):
     def discriminate(self, x_var):
         d_out = self.discriminator_template.construct(input=x_var)
         d = tf.nn.sigmoid(d_out[:, 0])
-        reg_dist_flat = self.encoder_template.construct(input=x_var)
-        reg_dist_info = self.reg_latent_dist.activate_dist(reg_dist_flat)
-        return d, self.reg_latent_dist.sample(reg_dist_info), reg_dist_info, reg_dist_flat
+        if self.is_reg:
+            reg_dist_flat = self.encoder_template.construct(input=x_var)
+            reg_dist_info = self.reg_latent_dist.activate_dist(reg_dist_flat)
+            return d, self.reg_latent_dist.sample(reg_dist_info), reg_dist_info, reg_dist_flat
+        else:
+            return d, None, None, None
 
     def generate(self, z_var):
         x_dist_flat = self.generator_template.construct(input=z_var)

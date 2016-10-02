@@ -34,15 +34,21 @@ if __name__ == "__main__":
     dataset = MnistDataset()
 
     latent_spec = [
-        (Uniform(62), False),
-        (Categorical(10), True),
-        (Uniform(1, fix_std=True), True),
-        (Uniform(1, fix_std=True), True),
-    ]
+        (Uniform(62), False)]
+        # (Categorical(10), True),
+        # (Uniform(1, fix_std=True), True),
+        # (Uniform(1, fix_std=True), True),
+    # ]
+    
+    is_reg = False
+    for x,y in latent_spec:
+        if y:
+            is_reg = True
 
     model = RegularizedGAN(
         output_dist=MeanBernoulli(dataset.image_dim),
         latent_spec=latent_spec,
+        is_reg=is_reg,
         batch_size=batch_size,
         image_shape=dataset.image_shape,
         network_type="mnist",

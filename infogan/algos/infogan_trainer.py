@@ -54,56 +54,58 @@ class InfoGANTrainer(object):
             real_d, _, _, _ = self.model.discriminate(input_tensor)
             fake_d, _, fake_reg_z_dist_info, _ = self.model.discriminate(fake_x)
 
-            reg_z = self.model.reg_z(z_var)
-
             discriminator_loss = - tf.reduce_mean(tf.log(real_d + TINY) + tf.log(1. - fake_d + TINY))
             generator_loss = - tf.reduce_mean(tf.log(fake_d + TINY))
 
             self.log_vars.append(("discriminator_loss", discriminator_loss))
             self.log_vars.append(("generator_loss", generator_loss))
 
-            mi_est = tf.constant(0.)
-            cross_ent = tf.constant(0.)
+            if self.model.is_reg:
 
-            # compute for discrete and continuous codes separately
-            # discrete:
-            if len(self.model.reg_disc_latent_dist.dists) > 0:
-                disc_reg_z = self.model.disc_reg_z(reg_z)
-                disc_reg_dist_info = self.model.disc_reg_dist_info(fake_reg_z_dist_info)
-                disc_log_q_c_given_x = self.model.reg_disc_latent_dist.logli(disc_reg_z, disc_reg_dist_info)
-                disc_log_q_c = self.model.reg_disc_latent_dist.logli_prior(disc_reg_z)
-                disc_cross_ent = tf.reduce_mean(-disc_log_q_c_given_x)
-                disc_ent = tf.reduce_mean(-disc_log_q_c)
-                disc_mi_est = disc_ent - disc_cross_ent
-                mi_est += disc_mi_est
-                cross_ent += disc_cross_ent
-                self.log_vars.append(("MI_disc", disc_mi_est))
-                self.log_vars.append(("CrossEnt_disc", disc_cross_ent))
-                discriminator_loss -= self.info_reg_coeff * disc_mi_est
-                generator_loss -= self.info_reg_coeff * disc_mi_est
+                reg_z = self.model.reg_z(z_var)
 
-            if len(self.model.reg_cont_latent_dist.dists) > 0:
-                cont_reg_z = self.model.cont_reg_z(reg_z)
-                cont_reg_dist_info = self.model.cont_reg_dist_info(fake_reg_z_dist_info)
-                cont_log_q_c_given_x = self.model.reg_cont_latent_dist.logli(cont_reg_z, cont_reg_dist_info)
-                cont_log_q_c = self.model.reg_cont_latent_dist.logli_prior(cont_reg_z)
-                cont_cross_ent = tf.reduce_mean(-cont_log_q_c_given_x)
-                cont_ent = tf.reduce_mean(-cont_log_q_c)
-                cont_mi_est = cont_ent - cont_cross_ent
-                mi_est += cont_mi_est
-                cross_ent += cont_cross_ent
-                self.log_vars.append(("MI_cont", cont_mi_est))
-                self.log_vars.append(("CrossEnt_cont", cont_cross_ent))
-                discriminator_loss -= self.info_reg_coeff * cont_mi_est
-                generator_loss -= self.info_reg_coeff * cont_mi_est
+                mi_est = tf.constant(0.)
+                cross_ent = tf.constant(0.)
 
-            for idx, dist_info in enumerate(self.model.reg_latent_dist.split_dist_info(fake_reg_z_dist_info)):
-                if "stddev" in dist_info:
-                    self.log_vars.append(("max_std_%d" % idx, tf.reduce_max(dist_info["stddev"])))
-                    self.log_vars.append(("min_std_%d" % idx, tf.reduce_min(dist_info["stddev"])))
+                # compute for discrete and continuous codes separately
+                # discrete:
+                if len(self.model.reg_disc_latent_dist.dists) > 0:
+                    disc_reg_z = self.model.disc_reg_z(reg_z)
+                    disc_reg_dist_info = self.model.disc_reg_dist_info(fake_reg_z_dist_info)
+                    disc_log_q_c_given_x = self.model.reg_disc_latent_dist.logli(disc_reg_z, disc_reg_dist_info)
+                    disc_log_q_c = self.model.reg_disc_latent_dist.logli_prior(disc_reg_z)
+                    disc_cross_ent = tf.reduce_mean(-disc_log_q_c_given_x)
+                    disc_ent = tf.reduce_mean(-disc_log_q_c)
+                    disc_mi_est = disc_ent - disc_cross_ent
+                    mi_est += disc_mi_est
+                    cross_ent += disc_cross_ent
+                    self.log_vars.append(("MI_disc", disc_mi_est))
+                    self.log_vars.append(("CrossEnt_disc", disc_cross_ent))
+                    discriminator_loss -= self.info_reg_coeff * disc_mi_est
+                    generator_loss -= self.info_reg_coeff * disc_mi_est
 
-            self.log_vars.append(("MI", mi_est))
-            self.log_vars.append(("CrossEnt", cross_ent))
+                if len(self.model.reg_cont_latent_dist.dists) > 0:
+                    cont_reg_z = self.model.cont_reg_z(reg_z)
+                    cont_reg_dist_info = self.model.cont_reg_dist_info(fake_reg_z_dist_info)
+                    cont_log_q_c_given_x = self.model.reg_cont_latent_dist.logli(cont_reg_z, cont_reg_dist_info)
+                    cont_log_q_c = self.model.reg_cont_latent_dist.logli_prior(cont_reg_z)
+                    cont_cross_ent = tf.reduce_mean(-cont_log_q_c_given_x)
+                    cont_ent = tf.reduce_mean(-cont_log_q_c)
+                    cont_mi_est = cont_ent - cont_cross_ent
+                    mi_est += cont_mi_est
+                    cross_ent += cont_cross_ent
+                    self.log_vars.append(("MI_cont", cont_mi_est))
+                    self.log_vars.append(("CrossEnt_cont", cont_cross_ent))
+                    discriminator_loss -= self.info_reg_coeff * cont_mi_est
+                    generator_loss -= self.info_reg_coeff * cont_mi_est
+
+                for idx, dist_info in enumerate(self.model.reg_latent_dist.split_dist_info(fake_reg_z_dist_info)):
+                    if "stddev" in dist_info:
+                        self.log_vars.append(("max_std_%d" % idx, tf.reduce_max(dist_info["stddev"])))
+                        self.log_vars.append(("min_std_%d" % idx, tf.reduce_min(dist_info["stddev"])))
+
+                self.log_vars.append(("MI", mi_est))
+                self.log_vars.append(("CrossEnt", cross_ent))
 
             all_vars = tf.trainable_variables()
             d_vars = [var for var in all_vars if var.name.startswith('d_')]
@@ -124,9 +126,10 @@ class InfoGANTrainer(object):
             for k, v in self.log_vars:
                 tf.scalar_summary(k, v)
 
-        with pt.defaults_scope(phase=pt.Phase.test):
-            with tf.variable_scope("model", reuse=True) as scope:
-                self.visualize_all_factors()
+        if self.model.is_reg:
+            with pt.defaults_scope(phase=pt.Phase.test):
+                with tf.variable_scope("model", reuse=True) as scope:
+                    self.visualize_all_factors()
 
     def visualize_all_factors(self):
         with tf.Session():
