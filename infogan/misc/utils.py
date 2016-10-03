@@ -35,3 +35,40 @@ def merge(images, size):
 
 def imsave(images, size, path):
     return scipy.misc.imsave(path, merge(images, size))
+
+def get_image(image_path, is_crop=True, resize_w=64):
+    return transform(imread(image_path), is_crop, resize_w)
+
+def imread(path):
+    im = scipy.misc.imread(path).astype(np.float)
+    if im.shape[-1] != 3:
+        if im.shape[-1] == 4: # some imagenet images have 4 channels (weird!)
+            im = im[:,:,:3]
+        elif len(im.shape) == 2: #grayscale images
+            im3 = np.zeros((im.shape[0], im.shape[1], 3 ))
+            im3[:,:,0] = im
+            im3[:,:,1] = im
+            im3[:,:,2] = im
+            im = im3
+    return im
+
+def center_crop(x, resize_w=64):
+    h, w = x.shape[:2]
+    if h<w:
+        crop_x = h
+    else:
+        crop_x = w
+    crop_h = crop_x
+    crop_w = crop_x
+
+    j = int(round((h - crop_h)/2.))
+    i = int(round((w - crop_w)/2.))
+    return scipy.misc.imresize(x[j:j+crop_h, i:i+crop_w], [resize_w, resize_w])
+
+def transform(image, is_crop=True, resize_w=64):
+    # npx : # of pixels width/height of image
+    if is_crop:
+        cropped_image = center_crop(image, resize_w=resize_w)
+    else:
+        cropped_image = image
+    return np.array(cropped_image)/127.5 - 1.

@@ -2,16 +2,34 @@ import numpy as np
 from tensorflow.examples.tutorials import mnist
 import os
 import numpy as np
-
+from infogan.misc.utils import get_image
 
 class Dataset(object):
-    def __init__(self, images, labels=None):
-        self._images = images.reshape(images.shape[0], -1)
-        self._labels = labels
-        self._epochs_completed = -1
-        self._num_examples = images.shape[0]
-        # shuffle on first run
-        self._index_in_epoch = self._num_examples
+    def __init__(self, data_root=None, list_file=None, batch_size=64, is_crop=True, is_grayscale=False, output_size=64,images=None, labels=None):
+
+        self.batch_size = batch_size
+        self.data_root = data_root
+        self.is_crop = is_crop
+        self.output_size=output_size
+        self.is_grayscale = is_grayscale
+        if self.is_grayscale:
+            self.image_shape = (self.output_size, self.output_size, None)
+        else:
+            self.image_shape = (self.output_size, self.output_size, 3)
+
+        if images:
+            self._images = images.reshape(images.shape[0], -1)
+            self._labels = labels
+            self._epochs_completed = -1
+            self._num_examples = images.shape[0]
+            # shuffle on first run
+            self._index_in_epoch = self._num_examples
+
+        if list_file:
+            with open(list_file, 'r') as ff:
+                    self.image_list = [path.strip().split(' ')[0] for path in ff.readlines()]
+            self.batch_idx = len(self.image_list) // self.batch_size
+            self.counter = 0
 
     @property
     def images(self):
@@ -30,27 +48,43 @@ class Dataset(object):
         return self._epochs_completed
 
     def next_batch(self, batch_size):
-        """Return the next `batch_size` examples from this data set."""
-        start = self._index_in_epoch
-        self._index_in_epoch += batch_size
-        if self._index_in_epoch > self._num_examples:
-            # Finished epoch
-            self._epochs_completed += 1
-            # Shuffle the data
-            perm = np.arange(self._num_examples)
-            np.random.shuffle(perm)
-            self._images = self._images[perm]
-            if self._labels is not None:
-                self._labels = self._labels[perm]
-            # Start next epoch
-            start = 0
-            self._index_in_epoch = batch_size
-            assert batch_size <= self._num_examples
-        end = self._index_in_epoch
-        if self._labels is None:
-            return self._images[start:end], None
-        else:
-            return self._images[start:end], self._labels[start:end]
+
+        if self.images:
+            """Return the next `batch_size` examples from this data set."""
+            start = self._index_in_epoch
+            self._index_in_epoch += batch_size
+            if self._index_in_epoch > self._num_examples:
+                # Finished epoch
+                self._epochs_completed += 1
+                # Shuffle the data
+                perm = np.arange(self._num_examples)
+                np.random.shuffle(perm)
+                self._images = self._images[perm]
+                if self._labels is not None:
+                    self._labels = self._labels[perm]
+                # Start next epoch
+                start = 0
+                self._index_in_epoch = batch_size
+                assert batch_size <= self._num_examples
+            end = self._index_in_epoch
+            if self._labels is None:
+                return self._images[start:end], None
+            else:
+                return self._images[start:end], self._labels[start:end]
+
+        if self.list_file:
+            idx = self.batch_idx[self.counter]
+            self.batch_files = self.image_list[idx*self.batch_size:(idx+1)*self.batch_size]
+            #if self.labels:
+            #    self.batch_labels = self.label[idx*self.batch_size:(idx+1)*self.batch_size]
+            self.batch_images = [get_image(os.path.join(self.data_root, batch_file), is_crop=self.is_crop, resize_w=self.output_size, is_grayscale = self.is_grayscale) for batch_file in batch_files]
+            self.counter = (self.counter+1) % self.batch_idx
+
+            if (self.is_grayscale):
+                batch_images = np.array(batch).astype(np.float32)[:, :, :, None]
+            else:
+                batch_images = np.array(batch).astype(np.float32)
+            return batch_images
 
 
 class MnistDataset(object):
@@ -85,3 +119,20 @@ class MnistDataset(object):
 
     def inverse_transform(self, data):
         return data
+
+class ImageNetDatset(Dataset):
+    def __init__(self, output_size=64):
+        self.data_root = '/mnt/disk1/vittal/data/ILSVRC2015/Data/CLS-LOC/train/'
+        self.is_crop = True
+        self.output_size=output_size
+        self.is_grayscale=False
+        Dataset.__init__(self, data_root=self.data_root, list_file='./data/imagenet/train_shuffle.txt', batch_size=64, is_crop=self.is_crop, is_grayscale=self.is_grayscale, output_size=self.output_size)
+
+class celebADataset(Dataset):
+    def __init__(self, output_size=64):
+        self.data_root = './data/celebA'
+        self.is_crop = True
+        self.output_size=output_size
+        self.is_grayscale=False
+
+        Dataset.__init__(self, data_root=self.data_root, list_file='./data/celebA/train_shuffle.txt', batch_size=64, is_crop=self.is_crop, is_grayscale=self.is_grayscale, output_size=self.output_size)
