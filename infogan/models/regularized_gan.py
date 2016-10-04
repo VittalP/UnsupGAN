@@ -3,6 +3,7 @@ import prettytensor as pt
 import tensorflow as tf
 import infogan.misc.custom_ops
 from infogan.misc.custom_ops import leaky_rectify
+from infogan.models.generative_networks import GenNetworks
 
 
 class RegularizedGAN(object):
@@ -22,6 +23,8 @@ class RegularizedGAN(object):
         self.batch_size = batch_size
         self.network_type = network_type
         self.image_shape = image_shape
+        self.gen_model = GenNetworks()
+
         assert all(isinstance(x, (Gaussian, Categorical, Bernoulli)) for x in self.reg_latent_dist.dists)
 
         self.reg_cont_latent_dist = Product([x for x in self.reg_latent_dist.dists if isinstance(x, Gaussian)])
@@ -51,20 +54,7 @@ class RegularizedGAN(object):
                          custom_fully_connected(self.reg_latent_dist.dist_flat_dim))
 
             with tf.variable_scope("g_net"):
-                self.generator_template = \
-                    (pt.template("input").
-                     custom_fully_connected(1024).
-                     fc_batch_norm().
-                     apply(tf.nn.relu).
-                     custom_fully_connected(image_size / 4 * image_size / 4 * 128).
-                     fc_batch_norm().
-                     apply(tf.nn.relu).
-                     reshape([-1, image_size / 4, image_size / 4, 128]).
-                     custom_deconv2d([0, image_size / 2, image_size / 2, 64], k_h=4, k_w=4).
-                     conv_batch_norm().
-                     apply(tf.nn.relu).
-                     custom_deconv2d([0] + list(image_shape), k_h=4, k_w=4).
-                     flatten())
+                self.generator_template = self.gen_model.infoGAN_mnist_net(image_shape)
         else:
             raise NotImplementedError
 
