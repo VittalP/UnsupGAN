@@ -60,7 +60,7 @@ class InfoGAN_MNIST_net():
              custom_fully_connected(self.encoder_dim))
         return encoder_template
 
-class dcgan_network():
+class dcgan_net():
     def __init__(self, image_shape=64, is_reg=False, encoder_dim=None):
         self.df_dim = 64
         self._shared_template = self.dcgan_shared_net(image_shape)
