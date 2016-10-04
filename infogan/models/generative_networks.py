@@ -5,6 +5,8 @@ class GenNetworks(object):
     def __init__(self):
         print "__init__ - ing"
 
+class InfoGAN_mnist_net():
+    
     def infoGAN_mnist_net(self, image_shape):
         image_size = image_shape[0]
         generator_template = \

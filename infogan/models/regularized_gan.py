@@ -2,8 +2,8 @@ from infogan.misc.distributions import Product, Distribution, Gaussian, Categori
 import prettytensor as pt
 import tensorflow as tf
 import infogan.misc.custom_ops
-from infogan.models.generative_networks import GenNetworks
-from infogan.models.discriminative_networks import DiscrimNetworks
+import infogan.models.generative_networks as G
+import infogan.models.discriminative_networks as D
 
 
 class RegularizedGAN(object):
@@ -23,26 +23,43 @@ class RegularizedGAN(object):
         self.batch_size = batch_size
         self.network_type = network_type
         self.image_shape = image_shape
-        self.gen_model = GenNetworks()
-        self.discrim_model = DiscrimNetworks()
+        self.gen_model = G.InfoGAN_mnist_net()
+
+        if self.is_reg:
+            self.encoder_dim=self.reg_latent_dist.dist_flat_dim
+        else:
+            self.encoder_dim=None
 
         assert all(isinstance(x, (Gaussian, Categorical, Bernoulli)) for x in self.reg_latent_dist.dists)
 
         self.reg_cont_latent_dist = Product([x for x in self.reg_latent_dist.dists if isinstance(x, Gaussian)])
         self.reg_disc_latent_dist = Product([x for x in self.reg_latent_dist.dists if isinstance(x, (Categorical, Bernoulli))])
 
-        image_size = image_shape[0]
-        if network_type == "mnist":
-            with tf.variable_scope("d_net"):
-                shared_template = self.discrim_model.infoGAN_mnist_shared_net(image_shape=image_shape)
-                self.discriminator_template = shared_template.custom_fully_connected(1)
-                if self.is_reg:
-                    self.encoder_template = self.discrim_model.infoGAN_mnist_encoder_net(shared_template=shared_template, encoder_dim=self.reg_latent_dist.dist_flat_dim)
+        self.set_D_net()
+        self.set_G_net()
 
-            with tf.variable_scope("g_net"):
-                self.generator_template = self.gen_model.infoGAN_mnist_net(image_shape)
-        else:
-            raise NotImplementedError
+    def set_D_net(self):
+        with tf.variable_scope("d_net"):
+            if self.network_type == "mnist":
+                self.D_model = D.InfoGAN_MNIST_net(image_shape=self.image_shape,is_reg=self.is_reg,encoder_dim=self.encoder_dim)
+                shared_template = self.D_model.shared_template
+                self.discriminator_template = shared_template.custom_fully_connected(1)
+                self.encoder_template = self.D_model.encoder_template
+            elif self.network_type == 'dcgan':
+                self.D_model = D.dcgan_network(image_shape=self.image_shape,is_reg=self.is_reg,encoder_dim=self.encoder_dim)
+                shared_template = self.D_model.shared_template
+                self.encoder_template = self.D_model.encoder_template
+            else:
+                raise NotImplementedError
+
+    def set_G_net(self):
+        with tf.variable_scope("g_net"):
+            if self.network_type == 'mnist':
+                self.generator_template = self.gen_model.infoGAN_mnist_net(self.image_shape)
+            elif self.network_type == 'dcgan':
+                raise NotImplementedError
+            else:
+                raise NotImplementedError
 
     def discriminate(self, x_var):
         d_out = self.discriminator_template.construct(input=x_var)
