@@ -12,12 +12,13 @@ class Dataset(object):
         self.is_crop = is_crop
         self.output_size=output_size
         self.is_grayscale = is_grayscale
+        self.list_file = list_file
         if self.is_grayscale:
             self.image_shape = (self.output_size, self.output_size, None)
         else:
             self.image_shape = (self.output_size, self.output_size, 3)
 
-        if images:
+        if images is not None:
             self._images = images.reshape(images.shape[0], -1)
             self._labels = labels
             self._epochs_completed = -1
@@ -25,8 +26,8 @@ class Dataset(object):
             # shuffle on first run
             self._index_in_epoch = self._num_examples
 
-        if list_file:
-            with open(list_file, 'r') as ff:
+        if self.list_file:
+            with open(self.list_file, 'r') as ff:
                     self.image_list = [path.strip().split(' ')[0] for path in ff.readlines()]
             self.batch_idx = len(self.image_list) // self.batch_size
             self.counter = 0
@@ -106,8 +107,8 @@ class MnistDataset(object):
             sup_labels.extend(self.train.labels[ids[:10]])
         np.random.set_state(rnd_state)
         self.supervised_train = Dataset(
-            np.asarray(sup_images),
-            np.asarray(sup_labels),
+            images=np.asarray(sup_images),
+            labels=np.asarray(sup_labels),
         )
         self.test = dataset.test
         self.validation = dataset.validation
