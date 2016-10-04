@@ -44,11 +44,11 @@ if __name__ == "__main__":
         dataset = datasets.celebADataset()
 
     latent_spec = [
-        (Uniform(100), False)]
-        # (Categorical(10), True),
-        # (Uniform(1, fix_std=True), True),
-        # (Uniform(1, fix_std=True), True),
-    # ]
+        (Uniform(62), False),
+        (Categorical(10), True),
+        (Uniform(1, fix_std=True), True),
+        (Uniform(1, fix_std=True), True),
+    ]
 
     is_reg = False
     for x,y in latent_spec:

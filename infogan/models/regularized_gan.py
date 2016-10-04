@@ -2,8 +2,8 @@ from infogan.misc.distributions import Product, Distribution, Gaussian, Categori
 import prettytensor as pt
 import tensorflow as tf
 import infogan.misc.custom_ops
-from infogan.misc.custom_ops import leaky_rectify
 from infogan.models.generative_networks import GenNetworks
+from infogan.models.discriminative_networks import DiscrimNetworks
 
 
 class RegularizedGAN(object):
@@ -24,6 +24,7 @@ class RegularizedGAN(object):
         self.network_type = network_type
         self.image_shape = image_shape
         self.gen_model = GenNetworks()
+        self.discrim_model = DiscrimNetworks()
 
         assert all(isinstance(x, (Gaussian, Categorical, Bernoulli)) for x in self.reg_latent_dist.dists)
 
@@ -33,25 +34,10 @@ class RegularizedGAN(object):
         image_size = image_shape[0]
         if network_type == "mnist":
             with tf.variable_scope("d_net"):
-                shared_template = \
-                    (pt.template("input").
-                     reshape([-1] + list(image_shape)).
-                     custom_conv2d(64, k_h=4, k_w=4).
-                     apply(leaky_rectify).
-                     custom_conv2d(128, k_h=4, k_w=4).
-                     conv_batch_norm().
-                     apply(leaky_rectify).
-                     custom_fully_connected(1024).
-                     fc_batch_norm().
-                     apply(leaky_rectify))
+                shared_template = self.discrim_model.infoGAN_mnist_shared_net(image_shape=image_shape)
                 self.discriminator_template = shared_template.custom_fully_connected(1)
                 if self.is_reg:
-                    self.encoder_template = \
-                        (shared_template.
-                         custom_fully_connected(128).
-                         fc_batch_norm().
-                         apply(leaky_rectify).
-                         custom_fully_connected(self.reg_latent_dist.dist_flat_dim))
+                    self.encoder_template = self.discrim_model.infoGAN_mnist_encoder_net(shared_template=shared_template, encoder_dim=self.reg_latent_dist.dist_flat_dim)
 
             with tf.variable_scope("g_net"):
                 self.generator_template = self.gen_model.infoGAN_mnist_net(image_shape)
