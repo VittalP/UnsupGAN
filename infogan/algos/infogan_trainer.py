@@ -5,7 +5,7 @@ import numpy as np
 from progressbar import ETA, Bar, Percentage, ProgressBar
 from infogan.misc.distributions import Bernoulli, Gaussian, Categorical
 import sys
-from infogan.misc.utils import save_images
+from infogan.misc.utils import save_images, inverse_transform
 TINY = 1e-8
 
 
@@ -45,7 +45,11 @@ class InfoGANTrainer(object):
         self.log_vars = []
 
     def init_opt(self):
-        self.input_tensor = input_tensor = tf.placeholder(tf.float32, [self.batch_size, self.dataset.image_dim])
+        if self.dataset.name == "mnist":
+            shape = [self.dataset.image_dim]
+        else:
+            shape = [self.dataset.output_size, self.dataset.output_size, 3]
+        self.input_tensor = input_tensor = tf.placeholder(tf.float32, [self.batch_size] + shape)
 
         with pt.defaults_scope(phase=pt.Phase.train):
             z_var = self.model.latent_dist.sample_prior(self.batch_size)
@@ -252,6 +256,8 @@ class InfoGANTrainer(object):
                     if counter % 100 == 0:
                         samples = sess.run(self.sample_x, feed_dict)
                         samples = samples[:64,...]
+                        if self.dataset.name != "mnist":
+                            samples = inverse_transform(samples)
                         save_images(samples, [8, 8],
                                 './samples/train_{:02d}_{:04d}.png'.format(epoch, counter))
                         # print("[Sample] d_loss: %.8f, g_loss: %.8f" % (discriminator_loss, generator_loss))
