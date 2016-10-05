@@ -105,5 +105,5 @@ class dcgan_net():
              custom_fully_connected(512).
              fc_batch_norm().
              apply(leaky_rectify).
-             custom_fully_connected(encoder_dim))
+             custom_fully_connected(self.encoder_dim))
         return encoder_template
