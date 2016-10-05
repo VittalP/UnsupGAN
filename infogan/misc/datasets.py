@@ -76,7 +76,18 @@ class Dataset(object):
 
         if self.list_file:
             idx = self.counter
-            self.batch_files = self.image_list[idx*self.batch_size:(idx+1)*self.batch_size]
+            start_idx = idx*self.batch_size
+            end_idx = (idx+1)*self.batch_size
+            if end_idx > len(self.image_list):
+                extra = end_idx - len(self.image_list)
+                end_idx = -1
+
+            self.batch_files = self.image_list[start_idx:end_idx]
+            if end_idx == -1:
+                rand_idx = np.random.randint(low=0, high=len(self.image_list), size=extra)
+                extra_files = [self.image_list[rand_idx[idx]] for idx in range(extra)]
+                self.batch_files = self.batch_files + extra_files
+                assert len(self.batch_files) == self.batch_size
             #if self.labels:
             #    self.batch_labels = self.label[idx*self.batch_size:(idx+1)*self.batch_size]
             batch = [get_image(os.path.join(self.data_root, batch_file), is_crop=self.is_crop, resize_w=self.output_size) for batch_file in self.batch_files]
