@@ -36,19 +36,19 @@ if __name__ == "__main__":
     mkdir_p(log_dir)
     mkdir_p(checkpoint_dir)
 
+    output_dist = None
+    network_type = 'dcgan'
     if FLAGS.dataset == "mnist":
         dataset = datasets.MnistDataset()
-        output_dist=MeanBernoulli(dataset.image_dim),
+        output_dist=MeanBernoulli(dataset.image_dim)
+        network_type='mnist'
     elif FLAGS.dataset == 'imagenet':
         dataset = datasets.ImageNetDatset(output_size=output_size)
     elif FLAGS.dataset == 'celebA':
         dataset = datasets.celebADataset()
 
     latent_spec = [
-        (Uniform(62), False),
-        (Categorical(10), True),
-        (Uniform(1, fix_std=True), True),
-        (Uniform(1, fix_std=True), True),
+        (Uniform(62), False)
     ]
 
     is_reg = False
@@ -57,12 +57,12 @@ if __name__ == "__main__":
             is_reg = True
 
     model = RegularizedGAN(
-        output_dist=None,
+        output_dist=output_dist,
         latent_spec=latent_spec,
         is_reg=is_reg,
         batch_size=batch_size,
         image_shape=dataset.image_shape,
-        network_type="mnist",
+        network_type=network_type,
     )
 
     algo = InfoGANTrainer(
