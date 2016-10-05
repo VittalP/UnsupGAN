@@ -7,7 +7,6 @@ class GenNetworks(object):
 
 class InfoGAN_mnist_net():
     def __init__(self):
-        self.gf_dim = 64
         return
     def infoGAN_mnist_net(self, image_shape):
         image_size = image_shape[0]
