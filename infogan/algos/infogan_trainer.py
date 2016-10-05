@@ -240,7 +240,10 @@ class InfoGANTrainer(object):
                 all_log_vals = []
                 for i in range(self.updates_per_epoch):
                     pbar.update(i)
-                    x, _ = self.dataset.train.next_batch(self.batch_size)
+                    if self.dataset.name == "mnist":
+                        x, _ = self.dataset.train.next_batch(self.batch_size)
+                    else:
+                        x = self.dataset.next_batch(self.batch_size)
                     feed_dict = {self.input_tensor: x}
                     log_vals = sess.run([self.discriminator_trainer] + log_vars, feed_dict)[1:]
                     sess.run(self.generator_trainer, feed_dict)
