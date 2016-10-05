@@ -123,7 +123,7 @@ class MnistDataset(object):
     def inverse_transform(self, data):
         return data
 
-class ImageNetDatset(Dataset):
+class ImageNetDataset(Dataset):
     def __init__(self, batch_size=64, output_size=64):
         self.name = "imagenet"
         self.data_root = '/mnt/disk1/vittal/data/ILSVRC2015/Data/CLS-LOC/train/'
@@ -139,5 +139,13 @@ class celebADataset(Dataset):
         self.is_crop = True
         self.output_size=output_size
         self.is_grayscale=False
-
         Dataset.__init__(self, data_root=self.data_root, list_file='./data/celebA/train_shuffle.txt', batch_size=batch_size, is_crop=self.is_crop, is_grayscale=self.is_grayscale, output_size=self.output_size)
+
+class StanfordCarsDataset(Dataset):
+    def __init__(self, batch_size=64, output_size=64):
+        self.name = "stanford-cars"
+        self.data_root = './data/stanford-cars'
+        self.is_crop = True
+        self.output_size=output_size
+        self.is_grayscale=False
+        Dataset.__init__(self, data_root=self.data_root, list_file='./data/stanford-cars/train_shuffle.txt', batch_size=batch_size, is_crop=self.is_crop, is_grayscale=self.is_grayscale, output_size=self.output_size)
