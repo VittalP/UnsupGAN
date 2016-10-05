@@ -23,7 +23,6 @@ class RegularizedGAN(object):
         self.batch_size = batch_size
         self.network_type = network_type
         self.image_shape = image_shape
-        self.gen_model = G.InfoGAN_mnist_net()
 
         if self.is_reg:
             self.encoder_dim=self.reg_latent_dist.dist_flat_dim
@@ -46,8 +45,9 @@ class RegularizedGAN(object):
                 self.discriminator_template = shared_template.custom_fully_connected(1)
                 self.encoder_template = self.D_model.encoder_template
             elif self.network_type == 'dcgan':
-                self.D_model = D.dcgan_network(image_shape=self.image_shape,is_reg=self.is_reg,encoder_dim=self.encoder_dim)
+                self.D_model = D.dcgan_net(image_shape=self.image_shape,is_reg=self.is_reg,encoder_dim=self.encoder_dim)
                 shared_template = self.D_model.shared_template
+                self.discriminator_template = shared_template.custom_fully_connected(1)
                 self.encoder_template = self.D_model.encoder_template
             else:
                 raise NotImplementedError
@@ -55,9 +55,11 @@ class RegularizedGAN(object):
     def set_G_net(self):
         with tf.variable_scope("g_net"):
             if self.network_type == 'mnist':
+                self.gen_model = G.InfoGAN_mnist_net()
                 self.generator_template = self.gen_model.infoGAN_mnist_net(self.image_shape)
             elif self.network_type == 'dcgan':
-                raise NotImplementedError
+                self.gen_model = G.dcgan_net()
+                self.generator_template = self.gen_model.dcgan_gen_net(self.image_shape)
             else:
                 raise NotImplementedError
 
@@ -73,8 +75,11 @@ class RegularizedGAN(object):
 
     def generate(self, z_var):
         x_dist_flat = self.generator_template.construct(input=z_var)
-        x_dist_info = self.output_dist.activate_dist(x_dist_flat)
-        return self.output_dist.sample(x_dist_info), x_dist_info
+        if self.network_type=="mnist":
+            x_dist_info = self.output_dist.activate_dist(x_dist_flat)
+            return self.output_dist.sample(x_dist_info), x_dist_info
+        else:
+            return x_dist_flat, None
 
     def disc_reg_z(self, reg_z_var):
         ret = []
