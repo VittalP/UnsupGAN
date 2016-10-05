@@ -29,7 +29,7 @@ class Dataset(object):
 
         if self.list_file:
             with open(self.list_file, 'r') as ff:
-                    self.image_list = [path.strip().split(' ')[0] for path in ff.readlines() if 'txt' in path]
+                    self.image_list = [path.strip().split(' ')[0] for path in ff.readlines() if 'txt' not in path]
             self.batch_idx = len(self.image_list) // self.batch_size
             self.counter = 0
 
