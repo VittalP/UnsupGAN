@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     root_log_dir = "logs/" + FLAGS.dataset
     root_checkpoint_dir = "ckt/" + FLAGS.dataset
-    batch_size = 128
+    batch_size = 64
     updates_per_epoch = 100
     max_epoch = 50
 
@@ -42,18 +42,18 @@ if __name__ == "__main__":
         dataset = datasets.MnistDataset()
         output_dist=MeanBernoulli(dataset.image_dim)
         network_type='mnist'
+        dataset.batch_idx = 100
     elif FLAGS.dataset == 'imagenet':
-        dataset = datasets.ImageNetDataset(output_size=FLAGS.output_size)
+        dataset = datasets.ImageNetDataset(batch_size=batch_size, output_size=FLAGS.output_size)
     elif FLAGS.dataset == 'celebA':
-        dataset = datasets.celebADataset(output_size=FLAGS.output_size)
-    elif 'stanford-cars':
-        dataset = datasets.StanfordCarsDataset(output_size=FLAGS.output_size)
+        dataset = datasets.celebADataset(batch_size=batch_size, output_size=FLAGS.output_size)
+    elif FLAGS.dataset == 'stanford-cars':
+        dataset = datasets.StanfordCarsDataset(batch_size=batch_size, output_size=FLAGS.output_size)
     else:
         raise NotImplementedError
 
     latent_spec = [
-        (Uniform(100), False),
-        (Categorical(5), True)
+        (Uniform(100), False)
     ]
 
     is_reg = False
