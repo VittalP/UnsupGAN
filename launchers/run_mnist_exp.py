@@ -43,12 +43,17 @@ if __name__ == "__main__":
         output_dist=MeanBernoulli(dataset.image_dim)
         network_type='mnist'
     elif FLAGS.dataset == 'imagenet':
-        dataset = datasets.ImageNetDatset(output_size=output_size)
+        dataset = datasets.ImageNetDataset(output_size=FLAGS.output_size)
     elif FLAGS.dataset == 'celebA':
-        dataset = datasets.celebADataset()
+        dataset = datasets.celebADataset(output_size=FLAGS.output_size)
+    elif 'stanford-cars':
+        dataset = datasets.StanfordCarsDataset(output_size=FLAGS.output_size)
+    else:
+        raise NotImplementedError
 
     latent_spec = [
-        (Uniform(62), False)
+        (Uniform(100), False),
+        (Categorical(5), True)
     ]
 
     is_reg = False
