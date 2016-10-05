@@ -12,6 +12,7 @@ class Dataset(object):
         self.is_crop = is_crop
         self.output_size=output_size
         self.is_grayscale = is_grayscale
+        self._images = images
         self.list_file = list_file
         if self.is_grayscale:
             self.image_shape = (self.output_size, self.output_size, None)
@@ -74,7 +75,7 @@ class Dataset(object):
                 return self._images[start:end], self._labels[start:end]
 
         if self.list_file:
-            idx = self.batch_idx[self.counter]
+            idx = self.counter
             self.batch_files = self.image_list[idx*self.batch_size:(idx+1)*self.batch_size]
             #if self.labels:
             #    self.batch_labels = self.label[idx*self.batch_size:(idx+1)*self.batch_size]
