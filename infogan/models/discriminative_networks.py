@@ -63,10 +63,10 @@ class InfoGAN_MNIST_net():
 class dcgan_net():
     def __init__(self, image_shape=64, is_reg=False, encoder_dim=None):
         self.df_dim = 64
+        self.image_shape = image_shape
         self._shared_template = self.dcgan_shared_net()
         self.is_reg = is_reg
         self.encoder_dim = encoder_dim
-        self.image_shape = image_shape
 
         if self.is_reg:
             self._encoder_template = self.dcgan_encoder_net()
