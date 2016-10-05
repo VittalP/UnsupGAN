@@ -79,7 +79,7 @@ class Dataset(object):
             self.batch_files = self.image_list[idx*self.batch_size:(idx+1)*self.batch_size]
             #if self.labels:
             #    self.batch_labels = self.label[idx*self.batch_size:(idx+1)*self.batch_size]
-            self.batch_images = [get_image(os.path.join(self.data_root, batch_file), is_crop=self.is_crop, resize_w=self.output_size, is_grayscale = self.is_grayscale) for batch_file in batch_files]
+            batch = [get_image(os.path.join(self.data_root, batch_file), is_crop=self.is_crop, resize_w=self.output_size) for batch_file in self.batch_files]
             self.counter = (self.counter+1) % self.batch_idx
 
             if (self.is_grayscale):
