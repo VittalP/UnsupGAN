@@ -38,6 +38,7 @@ if __name__ == "__main__":
 
     if FLAGS.dataset == "mnist":
         dataset = datasets.MnistDataset()
+        output_dist=MeanBernoulli(dataset.image_dim),
     elif FLAGS.dataset == 'imagenet':
         dataset = datasets.ImageNetDatset(output_size=output_size)
     elif FLAGS.dataset == 'celebA':
@@ -56,7 +57,7 @@ if __name__ == "__main__":
             is_reg = True
 
     model = RegularizedGAN(
-        output_dist=MeanBernoulli(dataset.image_dim),
+        output_dist=None,
         latent_spec=latent_spec,
         is_reg=is_reg,
         batch_size=batch_size,
