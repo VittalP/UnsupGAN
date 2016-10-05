@@ -90,6 +90,7 @@ class Dataset(object):
 
 class MnistDataset(object):
     def __init__(self):
+        self.name = "mnist"
         data_directory = "MNIST"
         if not os.path.exists(data_directory):
             os.makedirs(data_directory)
@@ -123,6 +124,7 @@ class MnistDataset(object):
 
 class ImageNetDatset(Dataset):
     def __init__(self, output_size=64):
+        self.name = "imagenet"
         self.data_root = '/mnt/disk1/vittal/data/ILSVRC2015/Data/CLS-LOC/train/'
         self.is_crop = True
         self.output_size=output_size
@@ -131,6 +133,7 @@ class ImageNetDatset(Dataset):
 
 class celebADataset(Dataset):
     def __init__(self, output_size=64):
+        self.name = "celebA"
         self.data_root = './data/celebA'
         self.is_crop = True
         self.output_size=output_size
