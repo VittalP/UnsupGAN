@@ -65,6 +65,9 @@ def center_crop(x, resize_w=64):
     i = int(round((w - crop_w)/2.))
     return scipy.misc.imresize(x[j:j+crop_h, i:i+crop_w], [resize_w, resize_w])
 
+def inverse_transform(images):
+    return (images+1.)/2.
+
 def transform(image, is_crop=True, resize_w=64):
     # npx : # of pixels width/height of image
     if is_crop:
