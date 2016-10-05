@@ -50,7 +50,7 @@ class Dataset(object):
         return self._epochs_completed
 
     def next_batch(self, batch_size):
-
+        self.batch_size = batch_size
         if self.images:
             """Return the next `batch_size` examples from this data set."""
             start = self._index_in_epoch
@@ -124,20 +124,20 @@ class MnistDataset(object):
         return data
 
 class ImageNetDatset(Dataset):
-    def __init__(self, output_size=64):
+    def __init__(self, batch_size=64, output_size=64):
         self.name = "imagenet"
         self.data_root = '/mnt/disk1/vittal/data/ILSVRC2015/Data/CLS-LOC/train/'
         self.is_crop = True
         self.output_size=output_size
         self.is_grayscale=False
-        Dataset.__init__(self, data_root=self.data_root, list_file='./data/imagenet/train_shuffle.txt', batch_size=64, is_crop=self.is_crop, is_grayscale=self.is_grayscale, output_size=self.output_size)
+        Dataset.__init__(self, data_root=self.data_root, list_file='./data/imagenet/train_shuffle.txt', batch_size=batch_size, is_crop=self.is_crop, is_grayscale=self.is_grayscale, output_size=self.output_size)
 
 class celebADataset(Dataset):
-    def __init__(self, output_size=64):
+    def __init__(self, batch_size=64, output_size=64):
         self.name = "celebA"
         self.data_root = './data/celebA'
         self.is_crop = True
         self.output_size=output_size
         self.is_grayscale=False
 
-        Dataset.__init__(self, data_root=self.data_root, list_file='./data/celebA/train_shuffle.txt', batch_size=64, is_crop=self.is_crop, is_grayscale=self.is_grayscale, output_size=self.output_size)
+        Dataset.__init__(self, data_root=self.data_root, list_file='./data/celebA/train_shuffle.txt', batch_size=batch_size, is_crop=self.is_crop, is_grayscale=self.is_grayscale, output_size=self.output_size)
