@@ -73,7 +73,7 @@ if __name__ == "__main__":
         log_dir=log_dir,
         checkpoint_dir=checkpoint_dir,
         max_epoch=max_epoch,
-        updates_per_epoch=updates_per_epoch,
+        updates_per_epoch=dataset.batch_idx,
         info_reg_coeff=1.0,
         generator_learning_rate=1e-3,
         discriminator_learning_rate=2e-4,
