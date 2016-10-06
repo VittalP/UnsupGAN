@@ -1,6 +1,7 @@
 MNIST
 *.pyc
 .idea
+.remote-sync.json
 imgs
 logs
 ckt
