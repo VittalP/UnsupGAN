@@ -24,6 +24,7 @@ if __name__ == "__main__":
 
     root_log_dir = "logs/" + FLAGS.dataset
     root_checkpoint_dir = "ckt/" + FLAGS.dataset
+    root_samples_dir = "samples/" + FLAGS.dataset
     batch_size = 64
     updates_per_epoch = 100
     max_epoch = 50
@@ -32,9 +33,11 @@ if __name__ == "__main__":
 
     log_dir = os.path.join(root_log_dir, exp_name)
     checkpoint_dir = os.path.join(root_checkpoint_dir, exp_name)
+    samples_dir = os.path.join(root_samples_dir, exp_name)
 
     mkdir_p(log_dir)
     mkdir_p(checkpoint_dir)
+    mkdir_p(samples_dir)
 
     output_dist = None
     network_type = 'dcgan'
@@ -77,6 +80,7 @@ if __name__ == "__main__":
         exp_name=exp_name,
         log_dir=log_dir,
         checkpoint_dir=checkpoint_dir,
+        samples_dir=samples_dir,
         max_epoch=max_epoch,
         updates_per_epoch=dataset.batch_idx,
         info_reg_coeff=1.0,

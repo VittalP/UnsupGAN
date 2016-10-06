@@ -17,6 +17,7 @@ class InfoGANTrainer(object):
                  exp_name="experiment",
                  log_dir="logs",
                  checkpoint_dir="ckt",
+                 samples_dir="samples",
                  max_epoch=100,
                  updates_per_epoch=100,
                  snapshot_interval=10000,
@@ -33,6 +34,7 @@ class InfoGANTrainer(object):
         self.max_epoch = max_epoch
         self.exp_name = exp_name
         self.log_dir = log_dir
+        self.samples_dir = samples_dir
         self.checkpoint_dir = checkpoint_dir
         self.snapshot_interval = snapshot_interval
         self.updates_per_epoch = updates_per_epoch
@@ -256,13 +258,13 @@ class InfoGANTrainer(object):
                         print("Model saved in file: %s" % fn)
 
                     # Save samples
-                    if counter % 100 == 0:
+                    if counter % 500 == 0:
                         samples = sess.run(self.sample_x, feed_dict)
                         samples = samples[:64,...]
                         if self.dataset.name != "mnist":
                             samples = inverse_transform(samples)
                         save_images(samples, [8, 8],
-                                './samples/train_{:02d}_{:04d}.png'.format(epoch, counter))
+                                '{}/train_{:02d}_{:04d}.png'.format(self.samples_dir, epoch, counter))
                         # print("[Sample] d_loss: %.8f, g_loss: %.8f" % (discriminator_loss, generator_loss))
 
                 if self.dataset.name == "mnist":
