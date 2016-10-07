@@ -64,14 +64,14 @@ class RegularizedGAN(object):
                 raise NotImplementedError
 
     def discriminate(self, x_var):
-        d_out = self.discriminator_template.construct(input=x_var)
-        d = tf.nn.sigmoid(d_out[:, 0])
+        d_logits = self.discriminator_template.construct(input=x_var)
+        d = tf.nn.sigmoid(d_logits[:, 0])
         if self.is_reg:
             reg_dist_flat = self.encoder_template.construct(input=x_var)
             reg_dist_info = self.reg_latent_dist.activate_dist(reg_dist_flat)
-            return d, self.reg_latent_dist.sample(reg_dist_info), reg_dist_info, reg_dist_flat
+            return d, d_logits[:,0], self.reg_latent_dist.sample(reg_dist_info), reg_dist_info, reg_dist_flat
         else:
-            return d, None, None, None
+            return d, d_logits[:,0], None, None, None
 
     def generate(self, z_var):
         x_dist_flat = self.generator_template.construct(input=z_var)

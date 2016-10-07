@@ -5,6 +5,7 @@ import numpy as np
 from progressbar import ETA, Bar, Percentage, ProgressBar
 from infogan.misc.distributions import Bernoulli, Gaussian, Categorical
 import sys
+import time
 from infogan.misc.utils import save_images, inverse_transform
 TINY = 1e-8
 
@@ -57,11 +58,13 @@ class InfoGANTrainer(object):
             z_var = self.model.latent_dist.sample_prior(self.batch_size)
             fake_x, _ = self.model.generate(z_var)
             self.sample_x, _ = self.model.generate(z_var)
-            real_d, _, _, _ = self.model.discriminate(input_tensor)
-            fake_d, _, fake_reg_z_dist_info, _ = self.model.discriminate(fake_x)
+            real_d, real_d_logits, _, _, _ = self.model.discriminate(input_tensor)
+            fake_d, fake_d_logits, _, fake_reg_z_dist_info, _ = self.model.discriminate(fake_x)
 
-            discriminator_loss = - tf.reduce_mean(tf.log(real_d + TINY) + tf.log(1. - fake_d + TINY))
-            generator_loss = - tf.reduce_mean(tf.log(fake_d + TINY))
+            discriminator_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(real_d_logits, tf.ones_like(real_d)))
+            discriminator_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(fake_d_logits, tf.zeros_like(fake_d)))
+            discriminator_loss = discriminator_loss_real + discriminator_loss_fake
+            generator_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(fake_d_logits, tf.ones_like(fake_d)))
 
             self.log_vars.append(("discriminator_loss", discriminator_loss))
             self.log_vars.append(("generator_loss", generator_loss))
@@ -116,6 +119,10 @@ class InfoGANTrainer(object):
             all_vars = tf.trainable_variables()
             d_vars = [var for var in all_vars if var.name.startswith('d_')]
             g_vars = [var for var in all_vars if var.name.startswith('g_')]
+            for var in d_vars:
+                print var.name
+            for var in g_vars:
+                print var.name
 
             self.log_vars.append(("max_real_d", tf.reduce_max(real_d)))
             self.log_vars.append(("min_real_d", tf.reduce_min(real_d)))
@@ -234,6 +241,8 @@ class InfoGANTrainer(object):
             log_vars = [x for _, x in self.log_vars]
             log_keys = [x for x, _ in self.log_vars]
 
+            start_time = time.time()
+
             for epoch in range(self.max_epoch):
                 widgets = ["epoch #%d|" % epoch, Percentage(), Bar(), ETA()]
                 pbar = ProgressBar(maxval=self.updates_per_epoch, widgets=widgets)
@@ -248,7 +257,8 @@ class InfoGANTrainer(object):
                         x = self.dataset.next_batch(self.batch_size)
                     feed_dict = {self.input_tensor: x}
                     log_vals = sess.run([self.discriminator_trainer] + log_vars, feed_dict)[1:]
-                    sess.run(self.generator_trainer, feed_dict)
+                    for ii in range(2):
+                        sess.run(self.generator_trainer, feed_dict)
                     all_log_vals.append(log_vals)
                     counter += 1
 
@@ -267,18 +277,18 @@ class InfoGANTrainer(object):
                                 '{}/train_{:02d}_{:04d}.png'.format(self.samples_dir, epoch, counter))
                         # print("[Sample] d_loss: %.8f, g_loss: %.8f" % (discriminator_loss, generator_loss))
 
-                if self.dataset.name == "mnist":
-                    x, _ = self.dataset.train.next_batch(self.batch_size)
-                else:
-                    x = self.dataset.next_batch(self.batch_size)
-                summary_str = sess.run(summary_op, {self.input_tensor: x})
-                summary_writer.add_summary(summary_str, counter)
+                    if self.dataset.name == "mnist":
+                        x, _ = self.dataset.train.next_batch(self.batch_size)
+                    else:
+                        x = self.dataset.next_batch(self.batch_size)
+                    summary_str = sess.run(summary_op, {self.input_tensor: x})
+                    summary_writer.add_summary(summary_str, counter)
 
-                avg_log_vals = np.mean(np.array(all_log_vals), axis=0)
-                log_dict = dict(zip(log_keys, avg_log_vals))
+                    avg_log_vals = np.mean(np.array(all_log_vals), axis=0)
+                    log_dict = dict(zip(log_keys, avg_log_vals))
 
-                log_line = "; ".join("%s: %s" % (str(k), str(v)) for k, v in zip(log_keys, avg_log_vals))
-                print("Epoch %d | " % (epoch) + log_line)
-                sys.stdout.flush()
-                if np.any(np.isnan(avg_log_vals)):
-                    raise ValueError("NaN detected!")
+                    log_line = "; ".join("%s: %s" % (str(k), str(v)) for k, v in zip(log_keys, avg_log_vals))
+                    print("Epoch %d | time: %4.4fs " % (epoch, time.time() - start_time) + log_line)
+                    sys.stdout.flush()
+                    if np.any(np.isnan(avg_log_vals)):
+                        raise ValueError("NaN detected!")
