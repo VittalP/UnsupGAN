@@ -66,8 +66,13 @@ class InfoGANTrainer(object):
             discriminator_loss = discriminator_loss_real + discriminator_loss_fake
             generator_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(fake_d_logits, tf.ones_like(fake_d)))
 
+            self.log_vars.append(("discriminator_loss_real", discriminator_loss_real))
+            self.log_vars.append(("discriminator_loss_fake", discriminator_loss_fake))
             self.log_vars.append(("discriminator_loss", discriminator_loss))
             self.log_vars.append(("generator_loss", generator_loss))
+
+            real_d_sum = tf.histogram_summary("real_d", real_d)
+            fake_d_sum = tf.histogram_summary("fake_d", fake_d)
 
             if self.model.is_reg:
 
@@ -119,15 +124,6 @@ class InfoGANTrainer(object):
             all_vars = tf.trainable_variables()
             d_vars = [var for var in all_vars if var.name.startswith('d_')]
             g_vars = [var for var in all_vars if var.name.startswith('g_')]
-            for var in d_vars:
-                print var.name
-            for var in g_vars:
-                print var.name
-
-            self.log_vars.append(("max_real_d", tf.reduce_max(real_d)))
-            self.log_vars.append(("min_real_d", tf.reduce_min(real_d)))
-            self.log_vars.append(("max_fake_d", tf.reduce_max(fake_d)))
-            self.log_vars.append(("min_fake_d", tf.reduce_min(fake_d)))
 
             discriminator_optimizer = tf.train.AdamOptimizer(self.discriminator_learning_rate, beta1=0.5)
             self.discriminator_trainer = pt.apply_optimizer(discriminator_optimizer, losses=[discriminator_loss],
@@ -256,10 +252,9 @@ class InfoGANTrainer(object):
                     else:
                         x = self.dataset.next_batch(self.batch_size)
                     feed_dict = {self.input_tensor: x}
-                    log_vals = sess.run([self.discriminator_trainer] + log_vars, feed_dict)[1:]
+                    all_log_vals = sess.run([self.discriminator_trainer] + log_vars, feed_dict)[1:]
                     for ii in range(2):
                         sess.run(self.generator_trainer, feed_dict)
-                    all_log_vals.append(log_vals)
                     counter += 1
 
                     if counter % self.snapshot_interval == 0:
@@ -268,7 +263,7 @@ class InfoGANTrainer(object):
                         print("Model saved in file: %s" % fn)
 
                     # Save samples
-                    if counter % 500 == 0:
+                    if counter % 100 == 0:
                         samples = sess.run(self.sample_x, feed_dict)
                         samples = samples[:64,...]
                         if self.dataset.name != "mnist":
@@ -284,11 +279,10 @@ class InfoGANTrainer(object):
                     summary_str = sess.run(summary_op, {self.input_tensor: x})
                     summary_writer.add_summary(summary_str, counter)
 
-                    avg_log_vals = np.mean(np.array(all_log_vals), axis=0)
-                    log_dict = dict(zip(log_keys, avg_log_vals))
+                    log_dict = dict(zip(log_keys, all_log_vals))
 
-                    log_line = "; ".join("%s: %s" % (str(k), str(v)) for k, v in zip(log_keys, avg_log_vals))
+                    log_line = "; ".join("%s: %s" % (str(k), str(v)) for k, v in zip(log_keys, all_log_vals))
                     print("Epoch %d | time: %4.4fs " % (epoch, time.time() - start_time) + log_line)
                     sys.stdout.flush()
-                    if np.any(np.isnan(avg_log_vals)):
+                    if np.any(np.isnan(all_log_vals)):
                         raise ValueError("NaN detected!")
