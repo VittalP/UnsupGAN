@@ -14,8 +14,8 @@ import datetime
 
 flags = tf.app.flags
 flags.DEFINE_string("dataset", "celebA", "The name of dataset [celebA, mnist, imagenet]")
-flags.DEFINE_string("output_size", 64, "Size of the images to generate")
-flags.DEFINE_string("batch_size", 64, "Size of the images to generate")
+flags.DEFINE_integer("output_size", 64, "Size of the images to generate")
+flags.DEFINE_integer("batch_size", 64, "Size of the images to generate")
 FLAGS = flags.FLAGS
 
 if __name__ == "__main__":
