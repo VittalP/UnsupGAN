@@ -15,6 +15,7 @@ import datetime
 flags = tf.app.flags
 flags.DEFINE_string("dataset", "celebA", "The name of dataset [celebA, mnist, imagenet]")
 flags.DEFINE_string("output_size", 64, "Size of the images to generate")
+flags.DEFINE_string("batch_size", 64, "Size of the images to generate")
 FLAGS = flags.FLAGS
 
 if __name__ == "__main__":
@@ -25,7 +26,7 @@ if __name__ == "__main__":
     root_log_dir = "logs/" + FLAGS.dataset
     root_checkpoint_dir = "ckt/" + FLAGS.dataset
     root_samples_dir = "samples/" + FLAGS.dataset
-    batch_size = 64
+    batch_size = FLAGS.batch_size
     updates_per_epoch = 100
     max_epoch = 50
 
@@ -84,7 +85,7 @@ if __name__ == "__main__":
         max_epoch=max_epoch,
         updates_per_epoch=dataset.batch_idx,
         info_reg_coeff=1.0,
-        generator_learning_rate=1e-3,
+        generator_learning_rate=2e-4,
         discriminator_learning_rate=2e-4,
     )
 
