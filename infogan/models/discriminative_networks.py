@@ -86,7 +86,6 @@ class dcgan_net():
             (pt.template("input").
              reshape([-1] + list(self.image_shape)).
              custom_conv2d(self.df_dim, name='d_h0_conv').
-             conv_batch_norm().
              apply(leaky_rectify).
              custom_conv2d(self.df_dim*2, name='d_h1_conv').
              conv_batch_norm().
@@ -94,7 +93,7 @@ class dcgan_net():
              custom_conv2d(self.df_dim*4, name='d_h2_conv').
              conv_batch_norm().
              apply(leaky_rectify).
-             custom_conv2d(self.df_dim*8, name='d_h0_conv').
+             custom_conv2d(self.df_dim*8, name='d_h3_conv').
              conv_batch_norm().
              apply(leaky_rectify))
         return shared_template
