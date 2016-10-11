@@ -208,19 +208,19 @@ class InfoGANTrainer(object):
                 transform_type = None
             else:
                 raise NotImplementedError
-            print type(img_var)
             if transform_type == 'output_dist':
-                img_var = self.dataset.inverse_transform(img_var, transform_type)
+                img_var = self.dataset.inverse_transform(img_var)
             else:
                 img_var = inverse_transform(img_var)
-            rows = 10
+            rows = dist.dim
+            cols = 10
             img_var = tf.reshape(img_var, [self.batch_size] + list(self.dataset.image_shape))
-            img_var = img_var[:rows * rows, :, :, :]
-            imgs = tf.reshape(img_var, [rows, rows] + list(self.dataset.image_shape))
+            img_var = img_var[:rows * cols, :, :, :]
+            imgs = tf.reshape(img_var, [rows, cols] + list(self.dataset.image_shape))
             stacked_img = []
             for row in xrange(rows):
                 row_img = []
-                for col in xrange(rows):
+                for col in xrange(cols):
                     row_img.append(imgs[row, col, :, :, :])
                 stacked_img.append(tf.concat(1, row_img))
             imgs = tf.concat(0, stacked_img)
@@ -273,14 +273,14 @@ class InfoGANTrainer(object):
                         print("Model saved in file: %s" % fn)
 
                     # Save samples
-                    if counter % 100 == 0:
-                        samples = sess.run(self.sample_x, feed_dict)
-                        samples = samples[:64,...]
-                        if self.dataset.name != "mnist":
-                            samples = inverse_transform(samples)
-                        save_images(samples, [8, 8],
-                                '{}/train_{:02d}_{:04d}.png'.format(self.samples_dir, epoch, counter))
-                        # print("[Sample] d_loss: %.8f, g_loss: %.8f" % (discriminator_loss, generator_loss))
+                    # if counter % 100 == 0:
+                    #     samples = sess.run(self.sample_x, feed_dict)
+                    #     samples = samples[:64,...]
+                    #     if self.dataset.name != "mnist":
+                    #         samples = inverse_transform(samples)
+                    #     save_images(samples, [8, 8],
+                    #             '{}/train_{:02d}_{:04d}.png'.format(self.samples_dir, epoch, counter))
+                    #     # print("[Sample] d_loss: %.8f, g_loss: %.8f" % (discriminator_loss, generator_loss))
 
                     if self.dataset.name == "mnist":
                         x, _ = self.dataset.train.next_batch(self.batch_size)
