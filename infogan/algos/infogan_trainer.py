@@ -195,16 +195,24 @@ class InfoGANTrainer(object):
                 raise NotImplementedError
             z_var = tf.constant(np.concatenate([fixed_noncat, cur_cat], axis=1))
 
-            _, x_dist_info = self.model.generate(z_var)
+            x_dist_flat, x_dist_info = self.model.generate(z_var)
 
             # just take the mean image
+            transform_type = 'output_dist'
             if isinstance(self.model.output_dist, Bernoulli):
                 img_var = x_dist_info["p"]
             elif isinstance(self.model.output_dist, Gaussian):
                 img_var = x_dist_info["mean"]
+            elif self.model.output_dist == None:
+                img_var = x_dist_flat
+                transform_type = None
             else:
                 raise NotImplementedError
-            img_var = self.dataset.inverse_transform(img_var)
+            print type(img_var)
+            if transform_type == 'output_dist':
+                img_var = self.dataset.inverse_transform(img_var, transform_type)
+            else:
+                img_var = inverse_transform(img_var)
             rows = 10
             img_var = tf.reshape(img_var, [self.batch_size] + list(self.dataset.image_shape))
             img_var = img_var[:rows * rows, :, :, :]
