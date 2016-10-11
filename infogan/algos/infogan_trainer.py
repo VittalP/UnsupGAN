@@ -85,7 +85,7 @@ class InfoGANTrainer(object):
                 # discrete:
                 if len(self.model.reg_disc_latent_dist.dists) > 0:
                     disc_reg_z = self.model.disc_reg_z(reg_z)
-                    disc_reg_dist_info = self.model.disc_reg_dist_info(fake_reg_z_dist_info)
+                    disc_reg_dist_info = self.model.disc_reg_dist_info(fake_reg_z_dist_info)  # Returns a dictionary of activations for each distribution
                     disc_log_q_c_given_x = self.model.reg_disc_latent_dist.logli(disc_reg_z, disc_reg_dist_info)
                     disc_log_q_c = self.model.reg_disc_latent_dist.logli_prior(disc_reg_z)
                     disc_cross_ent = tf.reduce_mean(-disc_log_q_c_given_x)
@@ -172,10 +172,12 @@ class InfoGANTrainer(object):
             elif isinstance(dist, Categorical):
                 lookup = np.eye(dist.dim, dtype=np.float32)
                 cat_ids = []
-                for idx in xrange(10):
+                for idx in xrange(dist.dim):
                     cat_ids.extend([idx] * 10)
-                cat_ids.extend([0] * (self.batch_size - 100))
+                cat_ids.extend([0] * (self.batch_size - 10 * dist.dim))
+                print cat_ids
                 cur_cat = np.copy(fixed_cat)
+                print cur_cat.shape
                 cur_cat[:, offset:offset+dist.dim] = lookup[cat_ids]
                 offset += dist.dim
             elif isinstance(dist, Bernoulli):
