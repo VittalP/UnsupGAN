@@ -135,7 +135,7 @@ class InfoGANTrainer(object):
             for k, v in self.log_vars:
                 tf.scalar_summary(k, v)
 
-        if self.model.is_reg:
+        if self.model.is_reg and self.dataset.name != 'imagenet':
             with pt.defaults_scope(phase=pt.Phase.test):
                 with tf.variable_scope("model", reuse=True) as scope:
                     self.visualize_all_factors()
@@ -273,14 +273,14 @@ class InfoGANTrainer(object):
                         print("Model saved in file: %s" % fn)
 
                     # Save samples
-                    # if counter % 100 == 0:
-                    #     samples = sess.run(self.sample_x, feed_dict)
-                    #     samples = samples[:64,...]
-                    #     if self.dataset.name != "mnist":
-                    #         samples = inverse_transform(samples)
-                    #     save_images(samples, [8, 8],
-                    #             '{}/train_{:02d}_{:04d}.png'.format(self.samples_dir, epoch, counter))
-                    #     # print("[Sample] d_loss: %.8f, g_loss: %.8f" % (discriminator_loss, generator_loss))
+                    if counter % 100 == 0:
+                        samples = sess.run(self.sample_x, feed_dict)
+                        samples = samples[:64,...]
+                        if self.dataset.name != "mnist":
+                            samples = inverse_transform(samples)
+                        save_images(samples, [8, 8],
+                                '{}/train_{:02d}_{:04d}.png'.format(self.samples_dir, epoch, counter))
+                        # print("[Sample] d_loss: %.8f, g_loss: %.8f" % (discriminator_loss, generator_loss))
 
                     if self.dataset.name == "mnist":
                         x, _ = self.dataset.train.next_batch(self.batch_size)
