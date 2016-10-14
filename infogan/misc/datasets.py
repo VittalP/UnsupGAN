@@ -1,19 +1,38 @@
 import numpy as np
 from tensorflow.examples.tutorials import mnist
 import os
+import sys
 import numpy as np
 from infogan.misc.utils import get_image
 
 class Dataset(object):
-    def __init__(self, data_root=None, list_file=None, batch_size=64, is_crop=True, is_grayscale=False, output_size=64,images=None, labels=None):
+    def __init__(self, name = None, data_root=None, list_file=None, batch_size=64, is_crop=True, is_grayscale=False, output_size=64,images=None, labels=None):
 
+        if name == None:
+            print "Need to provide a dataset name"
+            sys.exit(1);
+
+        self.name = name
         self.batch_size = batch_size
-        self.data_root = data_root
+
+        if data_root == None:
+            self.data_root = './data/' + name
+        else:
+            self.data_root = data_root
+
+        if list_file == None:
+            self.list_file = self.data_root + '/train_shuffle.txt'
+        else:
+            self.list_file = list_file
+        print self.list_file
+        if not os.path.exists(self.list_file):
+            print("List of training images not found")
+            sys.exit(1)
+
         self.is_crop = is_crop
         self.output_size=output_size
         self.is_grayscale = is_grayscale
         self._images = images
-        self.list_file = list_file
         if self.is_grayscale:
             self.image_shape = (self.output_size, self.output_size, None)
         else:
@@ -133,39 +152,3 @@ class MnistDataset(object):
 
     def inverse_transform(self, data):
         return data
-
-class ImageNetDataset(Dataset):
-    def __init__(self, batch_size=64, output_size=64):
-        self.name = "imagenet"
-        self.data_root = '/mnt/disk1/vittal/data/ILSVRC2015/Data/CLS-LOC/train/'
-        self.is_crop = True
-        self.output_size=output_size
-        self.is_grayscale=False
-        Dataset.__init__(self, data_root=self.data_root, list_file='./data/imagenet/train_shuffle.txt', batch_size=batch_size, is_crop=self.is_crop, is_grayscale=self.is_grayscale, output_size=self.output_size)
-
-class celebADataset(Dataset):
-    def __init__(self, batch_size=64, output_size=64):
-        self.name = "celebA"
-        self.data_root = './data/celebA'
-        self.is_crop = True
-        self.output_size=output_size
-        self.is_grayscale=False
-        Dataset.__init__(self, data_root=self.data_root, list_file='./data/celebA/train_shuffle.txt', batch_size=batch_size, is_crop=self.is_crop, is_grayscale=self.is_grayscale, output_size=self.output_size)
-
-class StanfordCarsDataset(Dataset):
-    def __init__(self, batch_size=64, output_size=64):
-        self.name = "stanford-cars"
-        self.data_root = './data/stanford-cars'
-        self.is_crop = True
-        self.output_size=output_size
-        self.is_grayscale=False
-        Dataset.__init__(self, data_root=self.data_root, list_file='./data/stanford-cars/train_shuffle.txt', batch_size=batch_size, is_crop=self.is_crop, is_grayscale=self.is_grayscale, output_size=self.output_size)
-
-class CIFARDataset(Dataset):
-    def __init__(self, batch_size=64, output_size=32):
-        self.name = "cifar"
-        self.data_root = './data/cifar'
-        self.is_crop = True
-        self.output_size=output_size
-        self.is_grayscale=False
-        Dataset.__init__(self, data_root=self.data_root, list_file='./data/cifar/train_shuffle.txt', batch_size=batch_size, is_crop=self.is_crop, is_grayscale=self.is_grayscale, output_size=self.output_size)
