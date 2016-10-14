@@ -64,14 +64,15 @@ class dcgan_net():
     def __init__(self, image_shape=64, is_reg=False, encoder_dim=None):
         self.df_dim = 64
         self.image_shape = image_shape
-        self._shared_template = self.dcgan_shared_net()
-        self.is_reg = is_reg
-        self.encoder_dim = encoder_dim
 
         if self.image_shape[0] == 32:
             self.k_h = self.k_w = 3
         else:
             self.k_h = self.k_w = 5
+
+        self._shared_template = self.dcgan_shared_net()
+        self.is_reg = is_reg
+        self.encoder_dim = encoder_dim
 
         if self.is_reg:
             self._encoder_template = self.dcgan_encoder_net()
