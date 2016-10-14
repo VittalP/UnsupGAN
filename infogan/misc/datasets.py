@@ -160,3 +160,12 @@ class StanfordCarsDataset(Dataset):
         self.output_size=output_size
         self.is_grayscale=False
         Dataset.__init__(self, data_root=self.data_root, list_file='./data/stanford-cars/train_shuffle.txt', batch_size=batch_size, is_crop=self.is_crop, is_grayscale=self.is_grayscale, output_size=self.output_size)
+
+class CIFARDataset(Dataset):
+    def __init__(self, batch_size=64, output_size=32):
+        self.name = "cifar"
+        self.data_root = './data/cifar'
+        self.is_crop = True
+        self.output_size=output_size
+        self.is_grayscale=False
+        Dataset.__init__(self, data_root=self.data_root, list_file='./data/cifar/train_shuffle.txt', batch_size=batch_size, is_crop=self.is_crop, is_grayscale=self.is_grayscale, output_size=self.output_size)

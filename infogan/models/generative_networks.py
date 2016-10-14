@@ -42,16 +42,16 @@ class dcgan_net():
              fc_batch_norm().
              apply(tf.nn.relu).
              reshape([-1, s16, s16, self.gf_dim * 8]).
-             custom_deconv2d([self.batch_size, s8, s8, self.gf_dim*4], name='g_h1').
+             custom_deconv2d([self.batch_size, s8, s8, self.gf_dim*4], name='g_h1', k_h=3, k_w=3).
              conv_batch_norm().
              apply(tf.nn.relu).
-             custom_deconv2d([self.batch_size, s4, s4, self.gf_dim*2], name='g_h2').
+             custom_deconv2d([self.batch_size, s4, s4, self.gf_dim*2], name='g_h2', k_h=3, k_w=3).
              conv_batch_norm().
              apply(tf.nn.relu).
-             custom_deconv2d([self.batch_size, s2, s2, self.gf_dim*1], name='g_h3').
+             custom_deconv2d([self.batch_size, s2, s2, self.gf_dim*1], name='g_h3', k_h=3, k_w=3).
              conv_batch_norm().
              apply(tf.nn.relu).
-             custom_deconv2d([self.batch_size, s, s, self.c_dim], name='g_h4').
+             custom_deconv2d([self.batch_size, s, s, self.c_dim], name='g_h4', k_h=3, k_w=3).
              apply(tf.nn.tanh))
 
         return generator_template

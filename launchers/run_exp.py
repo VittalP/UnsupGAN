@@ -53,11 +53,14 @@ if __name__ == "__main__":
         dataset = datasets.celebADataset(batch_size=batch_size, output_size=FLAGS.output_size)
     elif FLAGS.dataset == 'stanford-cars':
         dataset = datasets.StanfordCarsDataset(batch_size=batch_size, output_size=FLAGS.output_size)
+    elif FLAGS.dataset == 'cifar':
+        dataset = datasets.CIFARDataset(batch_size=batch_size, output_size=FLAGS.output_size)
     else:
         raise NotImplementedError
 
     latent_spec = [
-        (Uniform(100), False)
+        (Uniform(100), False),
+        (Categorical(10), True)
     ]
 
     is_reg = False
@@ -85,8 +88,8 @@ if __name__ == "__main__":
         max_epoch=max_epoch,
         updates_per_epoch=dataset.batch_idx,
         info_reg_coeff=1.0,
-        generator_learning_rate=2e-4,
-        discriminator_learning_rate=2e-4,
+        generator_learning_rate=2e-3,
+        discriminator_learning_rate=2e-3,
     )
 
     algo.train()
