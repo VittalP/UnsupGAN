@@ -12,6 +12,10 @@ class Dataset(object):
             print "Need to provide a dataset name"
             sys.exit(1);
 
+        self.supported_datasets = ['celebA', 'imagenet', 'cifar']
+        if name not in self.supported_datasets:
+            return NotImplementedError
+            
         self.name = name
         self.batch_size = batch_size
 
