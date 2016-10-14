@@ -15,7 +15,7 @@ import datetime
 flags = tf.app.flags
 flags.DEFINE_string("dataset", "celebA", "The name of dataset [celebA, mnist, imagenet]")
 flags.DEFINE_integer("output_size", 64, "Size of the images to generate")
-flags.DEFINE_integer("batch_size", 64, "Size of the images to generate")
+flags.DEFINE_integer("batch_size", 128, "Size of the images to generate")
 FLAGS = flags.FLAGS
 
 if __name__ == "__main__":
@@ -47,16 +47,8 @@ if __name__ == "__main__":
         output_dist=MeanBernoulli(dataset.image_dim)
         network_type='mnist'
         dataset.batch_idx = 100
-    elif FLAGS.dataset == 'imagenet':
-        dataset = datasets.ImageNetDataset(batch_size=batch_size, output_size=FLAGS.output_size)
-    elif FLAGS.dataset == 'celebA':
-        dataset = datasets.celebADataset(batch_size=batch_size, output_size=FLAGS.output_size)
-    elif FLAGS.dataset == 'stanford-cars':
-        dataset = datasets.StanfordCarsDataset(batch_size=batch_size, output_size=FLAGS.output_size)
-    elif FLAGS.dataset == 'cifar':
-        dataset = datasets.CIFARDataset(batch_size=batch_size, output_size=FLAGS.output_size)
     else:
-        raise NotImplementedError
+        dataset = datasets.Dataset(name=FLAGS.dataset)
 
     latent_spec = [
         (Uniform(100), False),
