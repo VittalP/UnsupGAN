@@ -31,16 +31,15 @@ class dcgan_net():
         self.gf_dim = 64
         self.c_dim = 3
         self.batch_size = 64
-
-        if self.image_shape[0] == 32:
-            self.k_h = self.k_w = 3
-        else:
-            self.k_h = self.k_w = 5
+        self.k_h = self.k_w = 5
 
     def dcgan_gen_net(self, image_shape):
         s = image_shape[0]
         s2, s4, s8, s16 = int(s/2), int(s/4), int(s/8), int(s/16)
 
+        if s == 32:
+            self.k_h = self.k_w = 3
+            
         generator_template = \
             (pt.template("input").
              custom_fully_connected(self.gf_dim*8*s16*s16, scope='g_h0_lin').
