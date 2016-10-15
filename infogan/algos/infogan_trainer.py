@@ -279,6 +279,7 @@ class InfoGANTrainer(object):
                                 '{}/train_{:02d}_{:04d}.png'.format(self.samples_dir, epoch, counter))
                         # print("[Sample] d_loss: %.8f, g_loss: %.8f" % (discriminator_loss, generator_loss))
 
+                    # Get next batch
                     if self.dataset.name == "mnist":
                         x, _ = self.dataset.train.next_batch(self.batch_size)
                     else:
