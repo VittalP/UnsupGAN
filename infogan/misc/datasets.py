@@ -15,7 +15,7 @@ class Dataset(object):
         self.supported_datasets = ['celebA', 'imagenet', 'cifar']
         if name not in self.supported_datasets:
             return NotImplementedError
-            
+
         self.name = name
         self.batch_size = batch_size
 
@@ -25,10 +25,11 @@ class Dataset(object):
             self.data_root = data_root
 
         if list_file == None:
-            self.list_file = self.data_root + '/train_shuffle.txt'
+            self.list_file['train'] = self.data_root + '/train_shuffle.txt'
+            self.list_file['val'] = self.data_root + 'val_shuffle.txt'
         else:
             self.list_file = list_file
-        print self.list_file
+
         if not os.path.exists(self.list_file):
             print("List of training images not found")
             sys.exit(1)
@@ -50,11 +51,12 @@ class Dataset(object):
             # shuffle on first run
             self._index_in_epoch = self._num_examples
 
-        if self.list_file:
-            with open(self.list_file, 'r') as ff:
-                    self.image_list = [path.strip().split(' ')[0] for path in ff.readlines() if 'txt' not in path]
-            self.batch_idx = len(self.image_list) // self.batch_size
-            self.counter = 0
+        for split in self.list_file.keys():
+            if self.list_file[split]:
+                with open(self.list_file[split], 'r') as ff:
+                    self.image_list[split] = [path.strip().split(' ')[0] for path in ff.readlines() if 'txt' not in path]
+                    self.batch_idx = len(self.image_list[split]) // self.batch_size
+                    self.counter = 0
 
     @property
     def images(self):
@@ -72,7 +74,7 @@ class Dataset(object):
     def epochs_completed(self):
         return self._epochs_completed
 
-    def next_batch(self, batch_size):
+    def next_batch(self, batch_size, split="train"):
         self.batch_size = batch_size
         if self.images:
             """Return the next `batch_size` examples from this data set."""
@@ -97,18 +99,18 @@ class Dataset(object):
             else:
                 return self._images[start:end], self._labels[start:end]
 
-        if self.list_file:
+        if self.list_file[split]:
             idx = self.counter
             start_idx = idx*self.batch_size
             end_idx = (idx+1)*self.batch_size
-            if end_idx > len(self.image_list):
-                extra = end_idx - len(self.image_list)
+            if end_idx > len(self.image_list[split]):
+                extra = end_idx - len(self.image_list[split])
                 end_idx = -1
 
-            self.batch_files = self.image_list[start_idx:end_idx]
+            self.batch_files = self.image_list[split][start_idx:end_idx]
             if end_idx == -1:
-                rand_idx = np.random.randint(low=0, high=len(self.image_list), size=extra)
-                extra_files = [self.image_list[rand_idx[idx]] for idx in range(extra)]
+                rand_idx = np.random.randint(low=0, high=len(self.image_list[split]), size=extra)
+                extra_files = [self.image_list[split][rand_idx[idx]] for idx in range(extra)]
                 self.batch_files = self.batch_files + extra_files
                 assert len(self.batch_files) == self.batch_size
             #if self.labels:
