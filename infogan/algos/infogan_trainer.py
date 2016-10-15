@@ -15,7 +15,7 @@ class InfoGANTrainer(object):
                  model,
                  batch_size=128,
                  dataset=None,
-                 train = True,
+                 isTrain = True,
                  exp_name="experiment",
                  log_dir="logs",
                  checkpoint_dir="ckt",

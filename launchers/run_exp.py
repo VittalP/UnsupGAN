@@ -80,7 +80,7 @@ if __name__ == "__main__":
         model=model,
         dataset=dataset,
         batch_size=batch_size,
-        train = FLAGS.train,
+        isTrain = FLAGS.train,
         exp_name=exp_name,
         log_dir=log_dir,
         checkpoint_dir=checkpoint_dir,
