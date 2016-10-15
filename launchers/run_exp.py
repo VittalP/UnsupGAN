@@ -16,6 +16,8 @@ flags = tf.app.flags
 flags.DEFINE_string("dataset", "celebA", "The name of dataset [celebA, mnist, imagenet]")
 flags.DEFINE_integer("output_size", 64, "Size of the images to generate")
 flags.DEFINE_integer("batch_size", 128, "Size of the images to generate")
+flags.DEFINE_bool("train", True, "Training mode or testing mode")
+flags.DEFINE_string("exp_name", None, "Model to continue training from or to test with")
 FLAGS = flags.FLAGS
 
 if __name__ == "__main__":
@@ -30,7 +32,12 @@ if __name__ == "__main__":
     updates_per_epoch = 100
     max_epoch = 50
 
-    exp_name = "%s_%s" % (FLAGS.dataset, timestamp)
+    if not FLAGS.exp_name:
+        exp_name = "%s_%s" % (FLAGS.dataset, timestamp)
+    else:
+        exp_name = FLAGS.exp_name
+
+    print("Experiment Name: %s" % (exp_name))
 
     log_dir = os.path.join(root_log_dir, exp_name)
     checkpoint_dir = os.path.join(root_checkpoint_dir, exp_name)
@@ -73,6 +80,7 @@ if __name__ == "__main__":
         model=model,
         dataset=dataset,
         batch_size=batch_size,
+        train = FLAGS.train,
         exp_name=exp_name,
         log_dir=log_dir,
         checkpoint_dir=checkpoint_dir,

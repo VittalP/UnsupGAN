@@ -13,8 +13,9 @@ TINY = 1e-8
 class InfoGANTrainer(object):
     def __init__(self,
                  model,
-                 batch_size,
+                 batch_size=128,
                  dataset=None,
+                 train = True,
                  exp_name="experiment",
                  log_dir="logs",
                  checkpoint_dir="ckt",
