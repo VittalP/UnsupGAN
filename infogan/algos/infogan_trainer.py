@@ -279,11 +279,18 @@ class InfoGANTrainer(object):
                                 '{}/train_{:02d}_{:04d}.png'.format(self.samples_dir, epoch, counter))
                         # print("[Sample] d_loss: %.8f, g_loss: %.8f" % (discriminator_loss, generator_loss))
 
+                    # Test on validation (test) set
+                    ##
+                        # Code to test performance on validation set.
+                    ##
+
                     # Get next batch
                     if self.dataset.name == "mnist":
                         x, _ = self.dataset.train.next_batch(self.batch_size)
                     else:
                         x = self.dataset.next_batch(self.batch_size)
+
+                    # Write summary to log file
                     summary_str = sess.run(summary_op, {self.input_tensor: x})
                     summary_writer.add_summary(summary_str, counter)
 
