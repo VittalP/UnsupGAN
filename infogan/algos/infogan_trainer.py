@@ -229,13 +229,9 @@ class InfoGANTrainer(object):
             tf.image_summary("image_%d_%s" % (dist_idx, dist.__class__.__name__), imgs)
 
 
-    def train(self):
+    def train(self, sess):
 
-        self.init_opt()
-
-        init = tf.initialize_all_variables()
-
-        with tf.Session() as sess:
+            init = tf.initialize_all_variables()
             sess.run(init)
 
             summary_op = tf.merge_all_summaries()

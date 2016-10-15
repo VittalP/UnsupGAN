@@ -92,4 +92,7 @@ if __name__ == "__main__":
         discriminator_learning_rate=2e-3,
     )
 
-    algo.train()
+    if FLAGS.train:
+        algo.init_opt()
+        with tf.Session() as sess:
+            algo.train(sess)
