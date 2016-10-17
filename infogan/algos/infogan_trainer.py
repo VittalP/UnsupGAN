@@ -7,8 +7,8 @@ from infogan.misc.distributions import Bernoulli, Gaussian, Categorical
 import sys
 import time
 from infogan.misc.utils import save_images, inverse_transform
+from sklearn import metrics
 TINY = 1e-8
-
 
 class InfoGANTrainer(object):
     def __init__(self,
@@ -59,7 +59,7 @@ class InfoGANTrainer(object):
             z_var = self.model.latent_dist.sample_prior(self.batch_size)
             fake_x, _ = self.model.generate(z_var)
             self.sample_x, _ = self.model.generate(z_var)
-            real_d, real_d_logits, _, _, _ = self.model.discriminate(input_tensor)
+            real_d, real_d_logits, _, real_reg_z_dist_info, _ = self.model.discriminate(input_tensor)
             fake_d, fake_d_logits, _, fake_reg_z_dist_info, _ = self.model.discriminate(fake_x)
 
             discriminator_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(real_d_logits, tf.ones_like(real_d)))
@@ -98,6 +98,9 @@ class InfoGANTrainer(object):
                     self.log_vars.append(("CrossEnt_disc", disc_cross_ent))
                     discriminator_loss -= self.info_reg_coeff * disc_mi_est
                     generator_loss -= self.info_reg_coeff * disc_mi_est
+
+                    disc_reg_dist_info = self.model.disc_reg_dist_info(fake_reg_z_dist_info)
+                    self.disc_prob = disc_reg_dist_info["prob"]
 
                 if len(self.model.reg_cont_latent_dist.dists) > 0:
                     cont_reg_z = self.model.cont_reg_z(reg_z)
@@ -281,8 +284,20 @@ class InfoGANTrainer(object):
 
                     # Test on validation (test) set
                     ##
-                        # Code to test performance on validation set.
-                    ##
+                    # Code to test performance on validation set.
+                    if counter % 500 == 0:
+                        print "Testing model performance on validation set..."
+                        pred_labels = []
+                        labels = []
+                        for ii in range(len(self.dataset.image_list["val"]) // self.batch_size):
+                            x, batch_labels = self.dataset.next_batch(self.batch_size, split = "val")
+                            d_prob = sess.run([self.disc_prob], {self.input_tensor: x})
+                            batch_pred_labels = np.argmax(d_prob, axis=1)
+                            pred_labels = pred_labels + batch_pred_labels
+                            labels = labels + batch_labels
+                        assert len(labels) == len(pred_labels)
+                        rand_score = metrics.adjusted_rand_score(labels, pred_labels)
+                                                
 
                     # Get next batch
                     if self.dataset.name == "mnist":
