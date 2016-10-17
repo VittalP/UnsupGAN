@@ -6,7 +6,7 @@ import numpy as np
 from infogan.misc.utils import get_image
 
 class Dataset(object):
-    def __init__(self, name = None, data_root=None, list_file=None, batch_size=64, is_crop=True, is_grayscale=False, output_size=64,images=None, labels=None):
+    def __init__(self, name = None, data_root=None, list_file=None, isVal = False, batch_size=64, is_crop=True, is_grayscale=False, output_size=64,images=None, labels=None):
 
         if name == None:
             print "Need to provide a dataset name"
@@ -24,7 +24,14 @@ class Dataset(object):
         else:
             self.data_root = data_root
 
-        keys = ['train', 'val']
+        if self.name in ['cifar']:
+            self.isVal = True
+
+        if self.isVal == True:
+            keys = ['train', 'val']
+        else:
+            keys = ['train']
+
         self.list_file = dict.fromkeys(keys)
         self.batch_idx = dict.fromkeys(keys)
         self.counter = dict.fromkeys(keys)
