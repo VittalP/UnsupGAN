@@ -99,8 +99,9 @@ class InfoGANTrainer(object):
                     discriminator_loss -= self.info_reg_coeff * disc_mi_est
                     generator_loss -= self.info_reg_coeff * disc_mi_est
 
-                    disc_reg_dist_info = self.model.disc_reg_dist_info(fake_reg_z_dist_info)
-                    self.disc_prob = disc_reg_dist_info["prob"]
+                    real_disc_reg_dist_info = self.model.disc_reg_dist_info(real_reg_z_dist_info)
+                    assert len(real_disc_reg_dist_info.keys()) == 1 # currently support only one categorical distribution
+                    self.disc_prob = real_disc_reg_dist_info[real_disc_reg_dist_info.keys()[0]]
 
                 if len(self.model.reg_cont_latent_dist.dists) > 0:
                     cont_reg_z = self.model.cont_reg_z(reg_z)
@@ -285,7 +286,7 @@ class InfoGANTrainer(object):
                     # Test on validation (test) set
                     ##
                     # Code to test performance on validation set.
-                    if counter % 500 == 0:
+                    if counter % 100 == 0:
                         print "Testing model performance on validation set..."
                         pred_labels = []
                         labels = []
@@ -297,7 +298,7 @@ class InfoGANTrainer(object):
                             labels = labels + batch_labels
                         assert len(labels) == len(pred_labels)
                         rand_score = metrics.adjusted_rand_score(labels, pred_labels)
-                                                
+                        all_rand_scores = all_rand_scores.append(rand_score)
 
                     # Get next batch
                     if self.dataset.name == "mnist":
