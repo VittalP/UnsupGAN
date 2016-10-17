@@ -37,8 +37,8 @@ class Dataset(object):
         self.counter = dict.fromkeys(keys)
 
         if list_file == None:
-            self.list_file['train'] = self.data_root + '/train_shuffle.txt'
-            self.list_file['val'] = self.data_root + 'val_shuffle.txt'
+            for key in self.list_file.keys():
+                self.list_file[key] = os.path.join(self.data_root, key + '_shuffle.txt')
         else:
             self.list_file = list_file
 
