@@ -24,6 +24,11 @@ class Dataset(object):
         else:
             self.data_root = data_root
 
+        keys = ['train', 'val']
+        self.list_file = dict.fromkeys(keys)
+        self.batch_idx = dict.fromkeys(keys)
+        self.counter = dict.fromkeys(keys)
+
         if list_file == None:
             self.list_file['train'] = self.data_root + '/train_shuffle.txt'
             self.list_file['val'] = self.data_root + 'val_shuffle.txt'
