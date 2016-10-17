@@ -55,8 +55,8 @@ class Dataset(object):
             if self.list_file[split]:
                 with open(self.list_file[split], 'r') as ff:
                     self.image_list[split] = [path.strip().split(' ')[0] for path in ff.readlines() if 'txt' not in path]
-                    self.batch_idx = len(self.image_list[split]) // self.batch_size
-                    self.counter = 0
+                    self.batch_idx[split] = len(self.image_list[split]) // self.batch_size
+                    self.counter[split] = 0
 
     @property
     def images(self):
@@ -100,7 +100,7 @@ class Dataset(object):
                 return self._images[start:end], self._labels[start:end]
 
         if self.list_file[split]:
-            idx = self.counter
+            idx = self.counter[split]
             start_idx = idx*self.batch_size
             end_idx = (idx+1)*self.batch_size
             if end_idx > len(self.image_list[split]):
@@ -116,7 +116,7 @@ class Dataset(object):
             #if self.labels:
             #    self.batch_labels = self.label[idx*self.batch_size:(idx+1)*self.batch_size]
             batch = [get_image(os.path.join(self.data_root, batch_file), is_crop=self.is_crop, resize_w=self.output_size) for batch_file in self.batch_files]
-            self.counter = (self.counter+1) % self.batch_idx
+            self.counter[split] = (self.counter[split]+1) % self.batch_idx[split]
 
             if (self.is_grayscale):
                 batch_images = np.array(batch).astype(np.float32)[:, :, :, None]
