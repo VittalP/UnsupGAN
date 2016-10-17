@@ -33,6 +33,8 @@ class Dataset(object):
             keys = ['train']
 
         self.list_file = dict.fromkeys(keys)
+        self.image_list = {key: list() for key in keys}
+        self.labels = {key: list() for key in keys}
         self.batch_idx = dict.fromkeys(keys)
         self.counter = dict.fromkeys(keys)
 
@@ -41,10 +43,6 @@ class Dataset(object):
                 self.list_file[key] = os.path.join(self.data_root, key + '_shuffle.txt')
         else:
             self.list_file = list_file
-
-        if not os.path.exists(self.list_file):
-            print("List of training images not found")
-            sys.exit(1)
 
         self.is_crop = is_crop
         self.output_size=output_size
@@ -64,20 +62,19 @@ class Dataset(object):
             self._index_in_epoch = self._num_examples
 
         for split in self.list_file.keys():
-            if not os.path.exist(self.list_file[split]):
-                print("List of %s set not found." % (split)")
+            if not os.path.exists(self.list_file[split]):
+                print("List of %s set not found." % (split))
                 sys.exit(1)
             with open(self.list_file[split], 'r') as ff:
                 for line in ff.readlines():
                     if 'txt' not in line:
                         split_line = line.strip().split(' ')
-                        self.image_list[split] = self.image_list[split].append(split_line[0]) # path to the image
+                        self.image_list[split].append(split_line[0]) # path to the image
                         if len(split_line) > 1:
-                            self.labels[split] = self.labels[split].append(split_line[1]) # real label, if present
+                            self.labels[split].append(split_line[1]) # real label, if present
                         else:
-                            self.labels[split] = self.labels[split].append(None) # Junk label (None)
+                            self.labels[split].append(None) # Junk label (None)
 
-                self.image_list[split] = [path.strip().split(' ')[0] for path in ff.readlines() if 'txt' not in path]
                 self.batch_idx[split] = len(self.image_list[split]) // self.batch_size
                 self.counter[split] = 0
 
@@ -85,9 +82,9 @@ class Dataset(object):
     def images(self):
         return self._images
 
-    @property
-    def labels(self):
-        return self._labels
+    # @property
+    # def labels(self):
+    #     return self._labels
 
     @property
     def num_examples(self):
