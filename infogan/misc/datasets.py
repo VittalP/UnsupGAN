@@ -64,11 +64,22 @@ class Dataset(object):
             self._index_in_epoch = self._num_examples
 
         for split in self.list_file.keys():
-            if self.list_file[split]:
-                with open(self.list_file[split], 'r') as ff:
-                    self.image_list[split] = [path.strip().split(' ')[0] for path in ff.readlines() if 'txt' not in path]
-                    self.batch_idx[split] = len(self.image_list[split]) // self.batch_size
-                    self.counter[split] = 0
+            if not os.path.exist(self.list_file[split]):
+                print("List of %s set not found." % (split)")
+                sys.exit(1)
+            with open(self.list_file[split], 'r') as ff:
+                for line in ff.readlines():
+                    if 'txt' not in line:
+                        split_line = line.strip().split(' ')
+                        self.image_list[split] = self.image_list[split].append(split_line[0]) # path to the image
+                        if len(split_line) > 1:
+                            self.labels[split] = self.labels[split].append(split_line[1]) # real label, if present
+                        else:
+                            self.labels[split] = self.labels[split].append(None) # Junk label (None)
+
+                self.image_list[split] = [path.strip().split(' ')[0] for path in ff.readlines() if 'txt' not in path]
+                self.batch_idx[split] = len(self.image_list[split]) // self.batch_size
+                self.counter[split] = 0
 
     @property
     def images(self):
