@@ -55,11 +55,10 @@ if __name__ == "__main__":
         network_type='mnist'
         dataset.batch_idx = 100
     else:
-        dataset = datasets.Dataset(name=FLAGS.dataset)
+        dataset = datasets.Dataset(name=FLAGS.dataset, batch_size=batch_size)
 
     latent_spec = [
-        (Uniform(100), False),
-        (Categorical(10), True)
+        (Uniform(100), False)
     ]
 
     is_reg = False
