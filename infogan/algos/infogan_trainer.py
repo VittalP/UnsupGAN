@@ -252,16 +252,17 @@ class InfoGANTrainer(object):
 
             for epoch in range(self.max_epoch):
                 widgets = ["epoch #%d|" % epoch, Percentage(), Bar(), ETA()]
-                pbar = ProgressBar(maxval=self.updates_per_epoch, widgets=widgets)
+                pbar = ProgressBar(maxval=self.updates_per_epoch['train'], widgets=widgets)
                 pbar.start()
 
                 all_log_vals = []
-                for i in range(self.updates_per_epoch):
+                all_rand_scores = []
+                for i in range(self.updates_per_epoch['train']):
                     pbar.update(i)
                     if self.dataset.name == "mnist":
                         x, _ = self.dataset.train.next_batch(self.batch_size)
                     else:
-                        x = self.dataset.next_batch(self.batch_size)
+                        x, _ = self.dataset.next_batch(self.batch_size)
                     feed_dict = {self.input_tensor: x}
                     all_log_vals = sess.run([self.discriminator_trainer] + log_vars, feed_dict)[1:]
                     for ii in range(2):
@@ -286,25 +287,28 @@ class InfoGANTrainer(object):
                     # Test on validation (test) set
                     ##
                     # Code to test performance on validation set.
-                    if counter % 100 == 0:
-                        print "Testing model performance on validation set..."
-                        pred_labels = []
-                        labels = []
-                        for ii in range(len(self.dataset.image_list["val"]) // self.batch_size):
-                            x, batch_labels = self.dataset.next_batch(self.batch_size, split = "val")
-                            d_prob = sess.run([self.disc_prob], {self.input_tensor: x})
-                            batch_pred_labels = np.argmax(d_prob, axis=1)
-                            pred_labels = pred_labels + batch_pred_labels
-                            labels = labels + batch_labels
-                        assert len(labels) == len(pred_labels)
-                        rand_score = metrics.adjusted_rand_score(labels, pred_labels)
-                        all_rand_scores = all_rand_scores.append(rand_score)
+                    if self.model.is_reg:
+                        if counter % 500 == 0:
+                            print "Testing model performance on validation set..."
+                            pred_labels = np.array([], dtype=np.int16).reshape(0,)
+                            labels = []
+                            for ii in range(self.updates_per_epoch['val']):
+                                x, batch_labels = self.dataset.next_batch(self.batch_size, split = "val")
+                                d_prob = sess.run(self.disc_prob, {self.input_tensor: x})
+                                batch_pred_labels = np.argmax(d_prob, axis=1)
+                                pred_labels = np.concatenate((pred_labels, batch_pred_labels))
+                                labels = labels + batch_labels
+                            assert len(labels) == len(pred_labels)
+                            rand_score = metrics.adjusted_rand_score(np.asarray(labels), pred_labels)
+                            with open('rand.txt', 'a') as rr:
+                                rr.write("%f\n" % (rand_score))
+                            all_rand_scores.append(rand_score)
 
                     # Get next batch
                     if self.dataset.name == "mnist":
                         x, _ = self.dataset.train.next_batch(self.batch_size)
                     else:
-                        x = self.dataset.next_batch(self.batch_size)
+                        x, _ = self.dataset.next_batch(self.batch_size)
 
                     # Write summary to log file
                     summary_str = sess.run(summary_op, {self.input_tensor: x})
