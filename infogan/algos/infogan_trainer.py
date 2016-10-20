@@ -59,21 +59,21 @@ class InfoGANTrainer(object):
             z_var = self.model.latent_dist.sample_prior(self.batch_size)
             fake_x, _ = self.model.generate(z_var)
             self.sample_x, _ = self.model.generate(z_var)
-            real_d, real_d_logits, _, real_reg_z_dist_info, _ = self.model.discriminate(input_tensor)
-            fake_d, fake_d_logits, _, fake_reg_z_dist_info, _ = self.model.discriminate(fake_x)
+            self.real_d = self.model.discriminate(input_tensor)
+            self.fake_d = self.model.discriminate(fake_x)
 
-            discriminator_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(real_d_logits, tf.ones_like(real_d)))
-            discriminator_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(fake_d_logits, tf.zeros_like(fake_d)))
+            discriminator_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.real_d['logits'], tf.ones_like(self.real_d['prob'])))
+            discriminator_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.fake_d['logits'], tf.zeros_like(self.fake_d['prob'])))
             discriminator_loss = discriminator_loss_real + discriminator_loss_fake
-            generator_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(fake_d_logits, tf.ones_like(fake_d)))
+            generator_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.fake_d['logits'], tf.ones_like(self.fake_d['prob'])))
 
             self.log_vars.append(("discriminator_loss_real", discriminator_loss_real))
             self.log_vars.append(("discriminator_loss_fake", discriminator_loss_fake))
             self.log_vars.append(("discriminator_loss", discriminator_loss))
             self.log_vars.append(("generator_loss", generator_loss))
 
-            real_d_sum = tf.histogram_summary("real_d", real_d)
-            fake_d_sum = tf.histogram_summary("fake_d", fake_d)
+            real_d_sum = tf.histogram_summary("real_d", self.real_d['prob'])
+            fake_d_sum = tf.histogram_summary("fake_d", self.fake_d['prob'])
 
             if self.model.is_reg:
 
@@ -86,7 +86,7 @@ class InfoGANTrainer(object):
                 # discrete:
                 if len(self.model.reg_disc_latent_dist.dists) > 0:
                     disc_reg_z = self.model.disc_reg_z(reg_z)
-                    disc_reg_dist_info = self.model.disc_reg_dist_info(fake_reg_z_dist_info)  # Returns a dictionary of activations for each distribution
+                    disc_reg_dist_info = self.model.disc_reg_dist_info(self.fake_d['reg_dist_info'])  # Returns a dictionary of activations for each distribution
                     disc_log_q_c_given_x = self.model.reg_disc_latent_dist.logli(disc_reg_z, disc_reg_dist_info)
                     disc_log_q_c = self.model.reg_disc_latent_dist.logli_prior(disc_reg_z)
                     disc_cross_ent = tf.reduce_mean(-disc_log_q_c_given_x)
@@ -99,13 +99,13 @@ class InfoGANTrainer(object):
                     discriminator_loss -= self.info_reg_coeff * disc_mi_est
                     generator_loss -= self.info_reg_coeff * disc_mi_est
 
-                    real_disc_reg_dist_info = self.model.disc_reg_dist_info(real_reg_z_dist_info)
+                    real_disc_reg_dist_info = self.model.disc_reg_dist_info(self.real_d['reg_dist_info'])
                     assert len(real_disc_reg_dist_info.keys()) == 1 # currently support only one categorical distribution
                     self.disc_prob = real_disc_reg_dist_info[real_disc_reg_dist_info.keys()[0]]
 
                 if len(self.model.reg_cont_latent_dist.dists) > 0:
                     cont_reg_z = self.model.cont_reg_z(reg_z)
-                    cont_reg_dist_info = self.model.cont_reg_dist_info(fake_reg_z_dist_info)
+                    cont_reg_dist_info = self.model.cont_reg_dist_info(self.fake_d['reg_dist_info'])
                     cont_log_q_c_given_x = self.model.reg_cont_latent_dist.logli(cont_reg_z, cont_reg_dist_info)
                     cont_log_q_c = self.model.reg_cont_latent_dist.logli_prior(cont_reg_z)
                     cont_cross_ent = tf.reduce_mean(-cont_log_q_c_given_x)
@@ -118,7 +118,7 @@ class InfoGANTrainer(object):
                     discriminator_loss -= self.info_reg_coeff * cont_mi_est
                     generator_loss -= self.info_reg_coeff * cont_mi_est
 
-                for idx, dist_info in enumerate(self.model.reg_latent_dist.split_dist_info(fake_reg_z_dist_info)):
+                for idx, dist_info in enumerate(self.model.reg_latent_dist.split_dist_info(self.fake_d['reg_dist_info'])):
                     if "stddev" in dist_info:
                         self.log_vars.append(("max_std_%d" % idx, tf.reduce_max(dist_info["stddev"])))
                         self.log_vars.append(("min_std_%d" % idx, tf.reduce_min(dist_info["stddev"])))
@@ -321,3 +321,8 @@ class InfoGANTrainer(object):
                     sys.stdout.flush()
                     if np.any(np.isnan(all_log_vals)):
                         raise ValueError("NaN detected!")
+
+    def validate(self, sess):
+        x, batch_labels = self.dataset.next_batch(self.batch_size, split="val")
+        dd = sess.run(self.real_d, {self.input_tensor: x})
+        feat = dd['features']
