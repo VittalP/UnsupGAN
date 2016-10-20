@@ -46,8 +46,8 @@ class RegularizedGAN(object):
                 self.encoder_template = self.D_model.encoder_template
             elif self.network_type == 'dcgan':
                 self.D_model = D.dcgan_net(image_shape=self.image_shape,is_reg=self.is_reg,encoder_dim=self.encoder_dim)
-                shared_template = self.D_model.shared_template
-                self.discriminator_template = shared_template.custom_fully_connected(1)
+                self.shared_template = self.D_model.shared_template
+                self.discriminator_template = self.shared_template.custom_fully_connected(1)
                 self.encoder_template = self.D_model.encoder_template
             else:
                 raise NotImplementedError
@@ -64,14 +64,17 @@ class RegularizedGAN(object):
                 raise NotImplementedError
 
     def discriminate(self, x_var):
-        d_logits = self.discriminator_template.construct(input=x_var)
-        d = tf.nn.sigmoid(d_logits[:, 0])
+        d_features = self.shared_template.construct(input=x_var)
+        d_logits = self.discriminator_template.construct(input=x_var)[:,0]
+        d = tf.nn.sigmoid(d_logits)
+        disc_dict = {'features': d_features, 'logits': d_logits, 'prob': d, 'sample': None, 'reg_dist_info': None, 'reg_dist_flat': None}
         if self.is_reg:
             reg_dist_flat = self.encoder_template.construct(input=x_var)
             reg_dist_info = self.reg_latent_dist.activate_dist(reg_dist_flat)
-            return d, d_logits[:,0], self.reg_latent_dist.sample(reg_dist_info), reg_dist_info, reg_dist_flat
-        else:
-            return d, d_logits[:,0], None, None, None
+            disc_dict['sample'] = self.reg_latent_dist.sample(reg_dist_info)
+            disc_dict['reg_dist_info'] = reg_dist_info
+            disc_dict['reg_dist_flat'] = reg_dist_flat
+        return disc_dict
 
     def generate(self, z_var):
         x_dist_flat = self.generator_template.construct(input=z_var)
