@@ -95,3 +95,10 @@ if __name__ == "__main__":
         algo.init_opt()
         with tf.Session() as sess:
             algo.train(sess)
+    else:
+        algo.init_opt()
+        with tf.Session() as sess:
+            restorer = tf.train.Saver()
+            restorer.restore(sess, './ckt/cifar/cifar_2016_10_18_15_16_00/cifar_2016_10_18_15_16_00_10000.ckpt')
+            print('Model restored.')
+            # algo.validate(sess)
