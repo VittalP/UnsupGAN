@@ -91,13 +91,11 @@ if __name__ == "__main__":
         discriminator_learning_rate=2e-3,
     )
 
-    if FLAGS.train:
-        algo.init_opt()
-        with tf.Session() as sess:
+    algo.init_opt()
+    with tf.Session() as sess:
+        if FLAGS.train:
             algo.train(sess)
-    else:
-        algo.init_opt()
-        with tf.Session() as sess:
+        else:
             restorer = tf.train.Saver()
             restorer.restore(sess, './ckt/cifar/cifar_2016_10_18_15_16_00/cifar_2016_10_18_15_16_00_10000.ckpt')
             print('Model restored.')
