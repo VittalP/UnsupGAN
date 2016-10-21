@@ -22,7 +22,7 @@ class InfoGANTrainer(object):
                  samples_dir="samples",
                  max_epoch=100,
                  updates_per_epoch=100,
-                 snapshot_interval=10000,
+                 snapshot_interval=2500,
                  info_reg_coeff=1.0,
                  discriminator_learning_rate=2e-4,
                  generator_learning_rate=2e-4,
@@ -285,24 +285,8 @@ class InfoGANTrainer(object):
                         # print("[Sample] d_loss: %.8f, g_loss: %.8f" % (discriminator_loss, generator_loss))
 
                     # Test on validation (test) set
-                    ##
-                    # Code to test performance on validation set.
-                    if self.model.is_reg:
-                        if counter % 500 == 0:
-                            print "Testing model performance on validation set..."
-                            pred_labels = np.array([], dtype=np.int16).reshape(0,)
-                            labels = []
-                            for ii in range(self.updates_per_epoch['val']):
-                                x, batch_labels = self.dataset.next_batch(self.batch_size, split = "val")
-                                d_prob = sess.run(self.disc_prob, {self.input_tensor: x})
-                                batch_pred_labels = np.argmax(d_prob, axis=1)
-                                pred_labels = np.concatenate((pred_labels, batch_pred_labels))
-                                labels = labels + batch_labels
-                            assert len(labels) == len(pred_labels)
-                            rand_score = metrics.adjusted_rand_score(np.asarray(labels), pred_labels)
-                            with open('rand.txt', 'a') as rr:
-                                rr.write("%f\n" % (rand_score))
-                            all_rand_scores.append(rand_score)
+                    if counter % 500 == 0:
+                        self.validate(sess)
 
                     # Get next batch
                     if self.dataset.name == "mnist":
@@ -323,6 +307,32 @@ class InfoGANTrainer(object):
                         raise ValueError("NaN detected!")
 
     def validate(self, sess):
-        x, batch_labels = self.dataset.next_batch(self.batch_size, split="val")
-        dd = sess.run(self.real_d, {self.input_tensor: x})
-        feat = dd['features']
+        pred_labels = np.array([], dtype=np.int16).reshape(0,)
+        labels = []
+        if self.model.is_reg:
+            trainX = np.array([], dtype=np.float32).reshape(0,)
+            for ii in range(self.updates_per_epoch['train']):
+                x, _ = self.dataset.next_batch(self.batch_size, split='train')
+                trainX = np.concatenate((trainX, x))
+
+            from sklearn.cluster import KMeans
+            kmeans = KMeans(n_clusters=10, init='k-means++').fit(trainX)
+
+        for ii in range(self.updates_per_epoch['val']):
+            x, batch_labels = self.dataset.next_batch(self.batch_size, split="val")
+            labels = labels + batch_labels
+
+            if self.model.is_reg:
+                d_prob = sess.run(self.disc_prob, {self.input_tensor: x})
+                batch_pred_labels = np.argmax(d_prob, axis=1)
+            else:
+                dd = sess.run(self.real_d, {self.input_tensor: x})
+                d_features = dd['features']
+                batch_pred_labels = kmeans.predict(d_features)
+
+            pred_labels = np.concatenate((pred_labels, batch_pred_labels))
+
+        assert len(labels) == len(pred_labels)
+        rand_score = metrics.adjusted_rand_score(np.asarray(labels), pred_labels)
+        with open(os.join(self.logdir + 'rand.txt'), 'a') as rr:
+            rr.write("%f\n" % (rand_score))
