@@ -285,7 +285,7 @@ class InfoGANTrainer(object):
                         # print("[Sample] d_loss: %.8f, g_loss: %.8f" % (discriminator_loss, generator_loss))
 
                     # Test on validation (test) set
-                    if counter % 500 == 0:
+                    if counter % 1 == 0:
                         self.validate(sess)
 
                     # Get next batch
@@ -309,11 +309,11 @@ class InfoGANTrainer(object):
     def validate(self, sess):
         pred_labels = np.array([], dtype=np.int16).reshape(0,)
         labels = []
-        if self.model.is_reg:
+        if not self.model.is_reg:
             trainX = np.array([], dtype=np.float32).reshape(0,)
             for ii in range(self.updates_per_epoch['train']):
                 x, _ = self.dataset.next_batch(self.batch_size, split='train')
-                trainX = np.concatenate((trainX, x))
+                trainX = np.concatenate((trainX, x), axis=0)
 
             from sklearn.cluster import KMeans
             kmeans = KMeans(n_clusters=10, init='k-means++').fit(trainX)
