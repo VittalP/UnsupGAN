@@ -23,16 +23,15 @@ class RegularizedGAN(object):
         self.batch_size = batch_size
         self.network_type = network_type
         self.image_shape = image_shape
-        self.keys = ['prob', 'logits', 'features']
-
-        for key in self.keys:
-            self.d_dict[key] = None
+        keys = ['prob', 'logits', 'features']
 
         if self.is_reg:
             self.encoder_dim=self.reg_latent_dist.dist_flat_dim
-            self.keys = self.keys + ['reg_dist_info']
+            keys = keys + ['reg_dist_info']
         else:
             self.encoder_dim=None
+
+        self.d_dict = dict.fromkeys(keys)
 
         assert all(isinstance(x, (Gaussian, Categorical, Bernoulli)) for x in self.reg_latent_dist.dists)
 
@@ -71,7 +70,7 @@ class RegularizedGAN(object):
     def discriminate(self, x_var):
         d_features = self.shared_template.construct(input=x_var)
         d_logits = self.discriminator_template.construct(input=x_var)[:,0]
-        d_prob = tf.nn.sigmoid(self.d_logits)
+        d_prob = tf.nn.sigmoid(d_logits)
 
         self.d_dict['features'] = d_features
         self.d_dict['logits'] = d_logits
