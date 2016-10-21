@@ -24,6 +24,7 @@ class Dataset(object):
         else:
             self.data_root = data_root
 
+        self.isVal = isVal
         if self.name in ['cifar']:
             self.isVal = True
 
