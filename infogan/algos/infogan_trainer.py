@@ -344,5 +344,5 @@ class InfoGANTrainer(object):
 
         assert len(labels) == len(pred_labels)
         rand_score = metrics.adjusted_rand_score(np.asarray(labels), pred_labels)
-        with open(os.path.join(self.log_dir + 'rand.txt'), 'a') as rr:
+        with open(os.path.join(self.log_dir, 'rand.txt'), 'a') as rr:
             rr.write("%f\n" % (rand_score))
