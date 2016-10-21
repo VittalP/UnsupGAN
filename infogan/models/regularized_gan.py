@@ -23,15 +23,13 @@ class RegularizedGAN(object):
         self.batch_size = batch_size
         self.network_type = network_type
         self.image_shape = image_shape
-        keys = ['prob', 'logits', 'features']
+        self.keys = ['prob', 'logits', 'features']
 
         if self.is_reg:
             self.encoder_dim=self.reg_latent_dist.dist_flat_dim
-            keys = keys + ['reg_dist_info']
+            self.keys = self.keys + ['reg_dist_info']
         else:
             self.encoder_dim=None
-
-        self.d_dict = dict.fromkeys(keys)
 
         assert all(isinstance(x, (Gaussian, Categorical, Bernoulli)) for x in self.reg_latent_dist.dists)
 
@@ -72,16 +70,18 @@ class RegularizedGAN(object):
         d_logits = self.discriminator_template.construct(input=x_var)[:,0]
         d_prob = tf.nn.sigmoid(d_logits)
 
-        self.d_dict['features'] = d_features
-        self.d_dict['logits'] = d_logits
-        self.d_dict['prob'] = d_prob
+        d_dict = dict.fromkeys(self.keys)
+
+        d_dict['features'] = d_features
+        d_dict['logits'] = d_logits
+        d_dict['prob'] = d_prob
 
         if self.is_reg:
             reg_dist_flat = self.encoder_template.construct(input=x_var)
             reg_dist_info = self.reg_latent_dist.activate_dist(reg_dist_flat)
-            self.d_dict['reg_dist_info'] = reg_dist_info
+            d_dict['reg_dist_info'] = reg_dist_info
 
-        return self.d_dict
+        return d_dict
 
     def generate(self, z_var):
         x_dist_flat = self.generator_template.construct(input=z_var)
