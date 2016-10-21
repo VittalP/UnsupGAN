@@ -4,7 +4,7 @@ import tensorflow as tf
 import numpy as np
 from progressbar import ETA, Bar, Percentage, ProgressBar
 from infogan.misc.distributions import Bernoulli, Gaussian, Categorical
-import sys
+import sys, os
 import time
 from infogan.misc.utils import save_images, inverse_transform
 from sklearn import metrics
@@ -285,7 +285,8 @@ class InfoGANTrainer(object):
                         # print("[Sample] d_loss: %.8f, g_loss: %.8f" % (discriminator_loss, generator_loss))
 
                     # Test on validation (test) set
-                    if counter % 1 == 0:
+                    if counter % 500 == 0:
+                        print "Validating current model on val set..."
                         self.validate(sess)
 
                     # Get next batch
@@ -310,14 +311,22 @@ class InfoGANTrainer(object):
         pred_labels = np.array([], dtype=np.int16).reshape(0,)
         labels = []
         if not self.model.is_reg:
-            trainX = np.array([], dtype=np.float32).reshape(0,)
+            trainX = np.array([]).reshape(0,0)
+            print "Getting all the training features."
             for ii in range(self.updates_per_epoch['train']):
                 x, _ = self.dataset.next_batch(self.batch_size, split='train')
-                trainX = np.concatenate((trainX, x), axis=0)
-
+                dd = sess.run(self.real_d, {self.input_tensor: x})
+                d_features = dd['features']
+                d_features = d_features.reshape((d_features.shape[0], np.prod(d_features.shape[1:])))
+                if trainX.shape[0] == 0: #Is empty
+                    trainX = d_features
+                else:
+                    trainX = np.concatenate((trainX, d_features), axis=0)
+            print "Learning the clusters."
             from sklearn.cluster import KMeans
             kmeans = KMeans(n_clusters=10, init='k-means++').fit(trainX)
 
+        print "Extracting features from val set and predicting from it."
         for ii in range(self.updates_per_epoch['val']):
             x, batch_labels = self.dataset.next_batch(self.batch_size, split="val")
             labels = labels + batch_labels
@@ -328,11 +337,12 @@ class InfoGANTrainer(object):
             else:
                 dd = sess.run(self.real_d, {self.input_tensor: x})
                 d_features = dd['features']
+                d_features = d_features.reshape((d_features.shape[0], np.prod(d_features.shape[1:])))
                 batch_pred_labels = kmeans.predict(d_features)
 
             pred_labels = np.concatenate((pred_labels, batch_pred_labels))
 
         assert len(labels) == len(pred_labels)
         rand_score = metrics.adjusted_rand_score(np.asarray(labels), pred_labels)
-        with open(os.join(self.logdir + 'rand.txt'), 'a') as rr:
+        with open(os.path.join(self.log_dir + 'rand.txt'), 'a') as rr:
             rr.write("%f\n" % (rand_score))
