@@ -22,7 +22,7 @@ class InfoGANTrainer(object):
                  samples_dir="samples",
                  max_epoch=100,
                  updates_per_epoch=100,
-                 snapshot_interval=2500,
+                 snapshot_interval=500,
                  info_reg_coeff=1.0,
                  discriminator_learning_rate=2e-4,
                  generator_learning_rate=2e-4,
@@ -60,6 +60,7 @@ class InfoGANTrainer(object):
             fake_x, _ = self.model.generate(z_var)
             self.sample_x, _ = self.model.generate(z_var)
             self.real_d = self.model.discriminate(input_tensor)
+            self.d_feat_real = self.real_d['features']
             self.fake_d = self.model.discriminate(fake_x)
 
             discriminator_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(self.real_d['logits'], tf.ones_like(self.real_d['prob'])))
@@ -309,22 +310,22 @@ class InfoGANTrainer(object):
 
     def validate(self, sess):
         pred_labels = np.array([], dtype=np.int16).reshape(0,)
+        pred_labels_kmeans = np.array([], dtype=np.int16).reshape(0,)
         labels = []
-        if not self.model.is_reg:
-            trainX = np.array([]).reshape(0,0)
-            print "Getting all the training features."
-            for ii in range(self.updates_per_epoch['train']):
-                x, _ = self.dataset.next_batch(self.batch_size, split='train')
-                dd = sess.run(self.real_d, {self.input_tensor: x})
-                d_features = dd['features']
-                d_features = d_features.reshape((d_features.shape[0], np.prod(d_features.shape[1:])))
-                if trainX.shape[0] == 0: #Is empty
-                    trainX = d_features
-                else:
-                    trainX = np.concatenate((trainX, d_features), axis=0)
-            print "Learning the clusters."
-            from sklearn.cluster import KMeans
-            kmeans = KMeans(n_clusters=10, init='k-means++').fit(trainX)
+        # if not self.model.is_reg:
+        trainX = np.array([]).reshape(0,0)
+        print "Getting all the training features."
+        for ii in range(self.updates_per_epoch['train']):
+            x, _ = self.dataset.next_batch(self.batch_size, split='train')
+            d_features = sess.run(self.d_feat_real, {self.input_tensor: x})
+            d_features = d_features.reshape((d_features.shape[0], np.prod(d_features.shape[1:])))
+            if trainX.shape[0] == 0: #Is empty
+                trainX = d_features
+            else:
+                trainX = np.concatenate((trainX, d_features), axis=0)
+        print "Learning the clusters."
+        from sklearn.cluster import KMeans
+        kmeans = KMeans(n_clusters=10, init='k-means++').fit(trainX)
 
         print "Extracting features from val set and predicting from it."
         for ii in range(self.updates_per_epoch['val']):
@@ -334,15 +335,19 @@ class InfoGANTrainer(object):
             if self.model.is_reg:
                 d_prob = sess.run(self.disc_prob, {self.input_tensor: x})
                 batch_pred_labels = np.argmax(d_prob, axis=1)
-            else:
-                dd = sess.run(self.real_d, {self.input_tensor: x})
-                d_features = dd['features']
-                d_features = d_features.reshape((d_features.shape[0], np.prod(d_features.shape[1:])))
-                batch_pred_labels = kmeans.predict(d_features)
+                pred_labels = np.concatenate((pred_labels, batch_pred_labels))
+            # else:
+            d_features = sess.run(self.d_feat_real, {self.input_tensor: x})
+            d_features = d_features.reshape((d_features.shape[0], np.prod(d_features.shape[1:])))
+            batch_pred_labels_kmeans = kmeans.predict(d_features)
 
-            pred_labels = np.concatenate((pred_labels, batch_pred_labels))
+            pred_labels_kmeans = np.concatenate((pred_labels_kmeans, batch_pred_labels_kmeans))
 
         assert len(labels) == len(pred_labels)
+        assert len(labels) == len(pred_labels_kmeans)
         rand_score = metrics.adjusted_rand_score(np.asarray(labels), pred_labels)
+        rand_score_kmeans = metrics.adjusted_rand_score(np.asarray(labels), pred_labels_kmeans)
         with open(os.path.join(self.log_dir, 'rand.txt'), 'a') as rr:
             rr.write("%f\n" % (rand_score))
+        with open(os.path.join(self.log_dir, 'rand_kmeans.txt'), 'a') as rr:
+            rr.write("%f\n" % (rand_score_kmeans))
