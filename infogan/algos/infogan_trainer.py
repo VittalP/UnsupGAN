@@ -6,7 +6,7 @@ from progressbar import ETA, Bar, Percentage, ProgressBar
 from infogan.misc.distributions import Bernoulli, Gaussian, Categorical
 import sys, os
 import time
-from infogan.misc.utils import save_images, inverse_transform
+from infogan.misc.utils import save_images, inverse_transform, compute_rand_score
 from sklearn import metrics
 TINY = 1e-8
 
@@ -312,7 +312,12 @@ class InfoGANTrainer(object):
         pred_labels = np.array([], dtype=np.int16).reshape(0,)
         pred_labels_kmeans = np.array([], dtype=np.int16).reshape(0,)
         labels = []
-        # if not self.model.is_reg:
+        n_clusters = self.dataset.n_labels
+        if self.model.is_reg == True and self.model.encoder_dim == self.dataset.n_labels:
+            predict_directly = True
+        else:
+            predict_directly = False
+
         trainX = np.array([]).reshape(0,0)
         print "Getting all the training features."
         for ii in range(self.updates_per_epoch['train']):
@@ -325,29 +330,25 @@ class InfoGANTrainer(object):
                 trainX = np.concatenate((trainX, d_features), axis=0)
         print "Learning the clusters."
         from sklearn.cluster import KMeans
-        kmeans = KMeans(n_clusters=10, init='k-means++').fit(trainX)
+        kmeans = KMeans(n_clusters=n_clusters, init='k-means++').fit(trainX)
 
         print "Extracting features from val set and predicting from it."
         for ii in range(self.updates_per_epoch['val']):
             x, batch_labels = self.dataset.next_batch(self.batch_size, split="val")
             labels = labels + batch_labels
 
-            if self.model.is_reg:
+            if predict_directly:
                 d_prob = sess.run(self.disc_prob, {self.input_tensor: x})
                 batch_pred_labels = np.argmax(d_prob, axis=1)
                 pred_labels = np.concatenate((pred_labels, batch_pred_labels))
-            # else:
+
             d_features = sess.run(self.d_feat_real, {self.input_tensor: x})
             d_features = d_features.reshape((d_features.shape[0], np.prod(d_features.shape[1:])))
             batch_pred_labels_kmeans = kmeans.predict(d_features)
 
             pred_labels_kmeans = np.concatenate((pred_labels_kmeans, batch_pred_labels_kmeans))
 
-        assert len(labels) == len(pred_labels)
-        assert len(labels) == len(pred_labels_kmeans)
-        rand_score = metrics.adjusted_rand_score(np.asarray(labels), pred_labels)
-        rand_score_kmeans = metrics.adjusted_rand_score(np.asarray(labels), pred_labels_kmeans)
-        with open(os.path.join(self.log_dir, 'rand.txt'), 'a') as rr:
-            rr.write("%f\n" % (rand_score))
-        with open(os.path.join(self.log_dir, 'rand_kmeans.txt'), 'a') as rr:
-            rr.write("%f\n" % (rand_score_kmeans))
+        if predict_directly:
+            compute_rand_score(labels=np.asarray(labels), pred_labels=pred_labels, path=os.path.join(self.log_dir, 'rand.txt'))
+
+        compute_rand_score(labels=np.asarray(labels), pred_labels=pred_labels_kmeans, path=os.path.join(self.log_dir, 'rand_kmeans.txt'))
