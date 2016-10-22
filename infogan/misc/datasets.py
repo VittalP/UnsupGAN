@@ -33,6 +33,10 @@ class Dataset(object):
         else:
             keys = ['train']
 
+        self.n_labels = None
+        if self.name == 'cifar':
+            self.n_labels = 10
+
         self.list_file = dict.fromkeys(keys)
         self.image_list = {key: list() for key in keys}
         self.labels = {key: list() for key in keys}
