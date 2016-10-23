@@ -33,7 +33,7 @@ class Dataset(object):
         if self.name in ['cifar']:
             self.isVal = True
 
-        if self.isVal == True:
+        if self.isVal is True:
             keys = ['train', 'val']
         else:
             keys = ['train']
@@ -48,14 +48,14 @@ class Dataset(object):
         self.batch_idx = dict.fromkeys(keys)
         self.counter = dict.fromkeys(keys)
 
-        if list_file == None:
+        if list_file is None:
             for key in self.list_file.keys():
                 self.list_file[key] = os.path.join(self.data_root, key + '_shuffle.txt')
         else:
             self.list_file = list_file
 
         self.is_crop = is_crop
-        self.output_size=output_size
+        self.output_size = output_size
         self.is_grayscale = is_grayscale
         self._images = images
         if self.is_grayscale:
