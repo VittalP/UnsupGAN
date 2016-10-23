@@ -7,7 +7,6 @@ from infogan.misc.distributions import Bernoulli, Gaussian, Categorical
 import sys, os
 import time
 from infogan.misc.utils import save_images, inverse_transform, compute_rand_score
-from sklearn import metrics
 TINY = 1e-8
 
 class InfoGANTrainer(object):
@@ -142,9 +141,10 @@ class InfoGANTrainer(object):
                 tf.scalar_summary(k, v)
 
         if self.model.is_reg and self.dataset.name != 'imagenet':
-            with pt.defaults_scope(phase=pt.Phase.test):
-                with tf.variable_scope("model", reuse=True) as scope:
-                    self.visualize_all_factors()
+            if self.model.encoder_dim <= 12:  # Ugly conditioning!!! Fix later
+                with pt.defaults_scope(phase=pt.Phase.test):
+                    with tf.variable_scope("model", reuse=True) as scope:
+                        self.visualize_all_factors()
 
     def visualize_all_factors(self):
         with tf.Session():
@@ -319,11 +319,19 @@ class InfoGANTrainer(object):
             predict_directly = False
 
         trainX = np.array([]).reshape(0,0)
+
+        def pool_features(feat, pool_type='avg'):
+            if pool_type == 'avg':
+                feat = feat.mean(axis=(1,2))
+            if pool_type == 'max':
+                feat = feat.mean(axis=(1,2))
+            return feat.reshape((feat.shape[0], feat.shape[-1]))
+
         print "Getting all the training features."
         for ii in range(self.updates_per_epoch['train']):
             x, _ = self.dataset.next_batch(self.batch_size, split='train')
             d_features = sess.run(self.d_feat_real, {self.input_tensor: x})
-            d_features = d_features.reshape((d_features.shape[0], np.prod(d_features.shape[1:])))
+            d_features = pool_features(d_features, pool_type='avg')
             if trainX.shape[0] == 0: #Is empty
                 trainX = d_features
             else:
@@ -343,7 +351,7 @@ class InfoGANTrainer(object):
                 pred_labels = np.concatenate((pred_labels, batch_pred_labels))
 
             d_features = sess.run(self.d_feat_real, {self.input_tensor: x})
-            d_features = d_features.reshape((d_features.shape[0], np.prod(d_features.shape[1:])))
+            d_features = pool_features(d_features, pool_type='avg')
             batch_pred_labels_kmeans = kmeans.predict(d_features)
 
             pred_labels_kmeans = np.concatenate((pred_labels_kmeans, batch_pred_labels_kmeans))
