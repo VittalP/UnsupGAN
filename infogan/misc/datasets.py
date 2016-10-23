@@ -5,8 +5,11 @@ import sys
 import numpy as np
 from infogan.misc.utils import get_image
 
+
 class Dataset(object):
-    def __init__(self, name = None, data_root=None, list_file=None, isVal = False, batch_size=64, is_crop=True, is_grayscale=False, output_size=64,images=None, labels=None):
+    def __init__(self, name=None, data_root=None, list_file=None, isVal=False,
+                 batch_size=64, is_crop=True, is_grayscale=False,
+                 output_size=64, images=None, labels=None):
 
         if name == None:
             print "Need to provide a dataset name"
@@ -19,6 +22,10 @@ class Dataset(object):
         self.name = name
         self.batch_size = batch_size
 
+        if data_root is not None:
+            self.data_root = data_root
+        elif self.name is 'imagenet':
+            self.data_root = '/mnt/disk1/vittal/data/ILSVRC2015/Data/CLS-LOC/'
         if data_root == None:
             self.data_root = './data/' + name
         else:
