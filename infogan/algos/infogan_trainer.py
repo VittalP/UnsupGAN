@@ -313,18 +313,18 @@ class InfoGANTrainer(object):
         pred_labels_kmeans = np.array([], dtype=np.int16).reshape(0,)
         labels = []
         n_clusters = self.dataset.n_labels
-        if self.model.is_reg == True and self.model.encoder_dim == n_clusters:
+        if self.model.is_reg is True and self.model.encoder_dim == n_clusters:
             predict_directly = True
         else:
             predict_directly = False
 
-        trainX = np.array([]).reshape(0,0)
+        trainX = np.array([]).reshape(0, 0)
 
         def pool_features(feat, pool_type='avg'):
             if pool_type == 'avg':
-                feat = feat.mean(axis=(1,2))
+                feat = feat.mean(axis=(1, 2))
             if pool_type == 'max':
-                feat = feat.mean(axis=(1,2))
+                feat = feat.mean(axis=(1, 2))
             return feat.reshape((feat.shape[0], feat.shape[-1]))
 
         print "Getting all the training features."
@@ -332,7 +332,7 @@ class InfoGANTrainer(object):
             x, _ = self.dataset.next_batch(self.batch_size, split='train')
             d_features = sess.run(self.d_feat_real, {self.input_tensor: x})
             d_features = pool_features(d_features, pool_type='avg')
-            if trainX.shape[0] == 0: #Is empty
+            if trainX.shape[0] == 0:  # Is empty
                 trainX = d_features
             else:
                 trainX = np.concatenate((trainX, d_features), axis=0)
