@@ -55,12 +55,14 @@ if __name__ == "__main__":
         network_type = 'mnist'
         dataset.batch_idx = 100
     else:
-        dataset = datasets.Dataset(name=FLAGS.dataset, batch_size=batch_size)
-    val_dataset = dataset.Dataset(name='cifar', batch_size=batch_size)
+        dataset = datasets.Dataset(name=FLAGS.dataset, batch_size=batch_size,
+                                   output_size=FLAGS.output_size)
+    val_dataset = datasets.Dataset(name='cifar', batch_size=batch_size,
+                                   output_size=FLAGS.output_size)
 
     latent_spec = [
         (Uniform(100), False),
-        (Categorical(25), True)
+        (Categorical(50), True)
     ]
 
     is_reg = False
