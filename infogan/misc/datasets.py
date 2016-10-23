@@ -26,10 +26,8 @@ class Dataset(object):
             self.data_root = data_root
         elif self.name is 'imagenet':
             self.data_root = '/mnt/disk1/vittal/data/ILSVRC2015/Data/CLS-LOC/'
-        if data_root == None:
-            self.data_root = './data/' + name
         else:
-            self.data_root = data_root
+            self.data_root = './data/' + name
 
         self.isVal = isVal
         if self.name in ['cifar']:
