@@ -11,9 +11,9 @@ class Dataset(object):
                  batch_size=64, is_crop=True, is_grayscale=False,
                  output_size=64, images=None, labels=None):
 
-        if name == None:
+        if name is None:
             print "Need to provide a dataset name"
-            sys.exit(1);
+            sys.exit(1)
 
         self.supported_datasets = ['celebA', 'imagenet', 'cifar']
         if name not in self.supported_datasets:
@@ -21,11 +21,8 @@ class Dataset(object):
 
         self.name = name
         self.batch_size = batch_size
-
         if data_root is not None:
             self.data_root = data_root
-        elif self.name is 'imagenet':
-            self.data_root = '/mnt/disk1/vittal/data/ILSVRC2015/Data/CLS-LOC/'
         else:
             self.data_root = './data/' + name
 
