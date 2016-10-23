@@ -234,13 +234,10 @@ class InfoGANTrainer(object):
             tf.image_summary("image_%d_%s" % (dist_idx, dist.__class__.__name__), imgs)
 
     def train(self, sess):
-
             init = tf.initialize_all_variables()
             sess.run(init)
-
             summary_op = tf.merge_all_summaries()
             summary_writer = tf.train.SummaryWriter(self.log_dir, sess.graph)
-
             saver = tf.train.Saver()
 
             counter = 0
@@ -280,8 +277,7 @@ class InfoGANTrainer(object):
                         if self.dataset.name != "mnist":
                             samples = inverse_transform(samples)
                         save_images(samples, [8, 8],
-                                '{}/train_{:02d}_{:04d}.png'.format(self.samples_dir, epoch, counter))
-                        # print("[Sample] d_loss: %.8f, g_loss: %.8f" % (discriminator_loss, generator_loss))
+                                    '{}/train_{:02d}_{:04d}.png'.format(self.samples_dir, epoch, counter))
 
                     # Test on validation (test) set
                     if counter % 500 == 0:
@@ -297,8 +293,6 @@ class InfoGANTrainer(object):
                     # Write summary to log file
                     summary_str = sess.run(summary_op, {self.input_tensor: x})
                     summary_writer.add_summary(summary_str, counter)
-
-                    log_dict = dict(zip(log_keys, all_log_vals))
 
                     log_line = "; ".join("%s: %s" % (str(k), str(v)) for k, v in zip(log_keys, all_log_vals))
                     print("Epoch %d | time: %4.4fs " % (epoch, time.time() - start_time) + log_line)
