@@ -56,6 +56,7 @@ if __name__ == "__main__":
         dataset.batch_idx = 100
     else:
         dataset = datasets.Dataset(name=FLAGS.dataset, batch_size=batch_size)
+    val_dataset = dataset.Dataset(name='cifar', batch_size=batch_size)
 
     latent_spec = [
         (Uniform(100), False),
@@ -79,6 +80,7 @@ if __name__ == "__main__":
     algo = InfoGANTrainer(
         model=model,
         dataset=dataset,
+        val_dataset=val_dataset,
         batch_size=batch_size,
         isTrain=FLAGS.train,
         exp_name=exp_name,
@@ -86,7 +88,6 @@ if __name__ == "__main__":
         checkpoint_dir=checkpoint_dir,
         samples_dir=samples_dir,
         max_epoch=max_epoch,
-        updates_per_epoch=dataset.batch_idx,
         info_reg_coeff=1.0,
         generator_learning_rate=2e-3,
         discriminator_learning_rate=2e-3,

@@ -4,23 +4,25 @@ import tensorflow as tf
 import numpy as np
 from progressbar import ETA, Bar, Percentage, ProgressBar
 from infogan.misc.distributions import Bernoulli, Gaussian, Categorical
-import sys, os
+import sys
+import os
 import time
 from infogan.misc.utils import save_images, inverse_transform, compute_rand_score
 TINY = 1e-8
+
 
 class InfoGANTrainer(object):
     def __init__(self,
                  model,
                  batch_size=128,
                  dataset=None,
-                 isTrain = True,
+                 val_dataset=None,
+                 isTrain=True,
                  exp_name="experiment",
                  log_dir="logs",
                  checkpoint_dir="ckt",
                  samples_dir="samples",
                  max_epoch=100,
-                 updates_per_epoch=100,
                  snapshot_interval=500,
                  info_reg_coeff=1.0,
                  discriminator_learning_rate=2e-4,
@@ -31,6 +33,7 @@ class InfoGANTrainer(object):
         """
         self.model = model
         self.dataset = dataset
+        self.val_dataset = val_dataset
         self.batch_size = batch_size
         self.max_epoch = max_epoch
         self.exp_name = exp_name
@@ -38,7 +41,6 @@ class InfoGANTrainer(object):
         self.samples_dir = samples_dir
         self.checkpoint_dir = checkpoint_dir
         self.snapshot_interval = snapshot_interval
-        self.updates_per_epoch = updates_per_epoch
         self.generator_learning_rate = generator_learning_rate
         self.discriminator_learning_rate = discriminator_learning_rate
         self.info_reg_coeff = info_reg_coeff
@@ -76,9 +78,7 @@ class InfoGANTrainer(object):
             fake_d_sum = tf.histogram_summary("fake_d", self.fake_d['prob'])
 
             if self.model.is_reg:
-
                 reg_z = self.model.reg_z(z_var)
-
                 mi_est = tf.constant(0.)
                 cross_ent = tf.constant(0.)
 
@@ -100,7 +100,7 @@ class InfoGANTrainer(object):
                     generator_loss -= self.info_reg_coeff * disc_mi_est
 
                     real_disc_reg_dist_info = self.model.disc_reg_dist_info(self.real_d['reg_dist_info'])
-                    assert len(real_disc_reg_dist_info.keys()) == 1 # currently support only one categorical distribution
+                    assert len(real_disc_reg_dist_info.keys()) == 1  # currently support only one categorical distribution
                     self.disc_prob = real_disc_reg_dist_info[real_disc_reg_dist_info.keys()[0]]
 
                 if len(self.model.reg_cont_latent_dist.dists) > 0:
@@ -209,7 +209,7 @@ class InfoGANTrainer(object):
                 img_var = x_dist_info["p"]
             elif isinstance(self.model.output_dist, Gaussian):
                 img_var = x_dist_info["mean"]
-            elif self.model.output_dist == None:
+            elif self.model.output_dist is None:
                 img_var = x_dist_flat
                 transform_type = None
             else:
@@ -233,7 +233,6 @@ class InfoGANTrainer(object):
             imgs = tf.expand_dims(imgs, 0)
             tf.image_summary("image_%d_%s" % (dist_idx, dist.__class__.__name__), imgs)
 
-
     def train(self, sess):
 
             init = tf.initialize_all_variables()
@@ -253,12 +252,11 @@ class InfoGANTrainer(object):
 
             for epoch in range(self.max_epoch):
                 widgets = ["epoch #%d|" % epoch, Percentage(), Bar(), ETA()]
-                pbar = ProgressBar(maxval=self.updates_per_epoch['train'], widgets=widgets)
+                pbar = ProgressBar(maxval=self.dataset.batch_idx['train'], widgets=widgets)
                 pbar.start()
 
                 all_log_vals = []
-                all_rand_scores = []
-                for i in range(self.updates_per_epoch['train']):
+                for i in range(self.dataset.batch_idx['train']):
                     pbar.update(i)
                     if self.dataset.name == "mnist":
                         x, _ = self.dataset.train.next_batch(self.batch_size)
@@ -278,7 +276,7 @@ class InfoGANTrainer(object):
                     # Save samples
                     if counter % 100 == 0:
                         samples = sess.run(self.sample_x, feed_dict)
-                        samples = samples[:64,...]
+                        samples = samples[:64, ...]
                         if self.dataset.name != "mnist":
                             samples = inverse_transform(samples)
                         save_images(samples, [8, 8],
@@ -328,8 +326,8 @@ class InfoGANTrainer(object):
             return feat.reshape((feat.shape[0], feat.shape[-1]))
 
         print "Getting all the training features."
-        for ii in range(self.updates_per_epoch['train']):
-            x, _ = self.dataset.next_batch(self.batch_size, split='train')
+        for ii in range(self.val_dataset.batch_idx['train']):
+            x, _ = self.val_dataset.next_batch(self.batch_size, split='train')
             d_features = sess.run(self.d_feat_real, {self.input_tensor: x})
             d_features = pool_features(d_features, pool_type='avg')
             if trainX.shape[0] == 0:  # Is empty
@@ -341,8 +339,8 @@ class InfoGANTrainer(object):
         kmeans = KMeans(n_clusters=n_clusters, init='k-means++').fit(trainX)
 
         print "Extracting features from val set and predicting from it."
-        for ii in range(self.updates_per_epoch['val']):
-            x, batch_labels = self.dataset.next_batch(self.batch_size, split="val")
+        for ii in range(self.val_dataset.batch_idx['val']):
+            x, batch_labels = self.val_dataset.next_batch(self.batch_size, split="val")
             labels = labels + batch_labels
 
             if predict_directly:
