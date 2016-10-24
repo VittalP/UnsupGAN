@@ -2,7 +2,6 @@ import numpy as np
 from tensorflow.examples.tutorials import mnist
 import os
 import sys
-import numpy as np
 from infogan.misc.utils import get_image
 
 
