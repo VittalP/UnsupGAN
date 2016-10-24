@@ -3,6 +3,8 @@ from tensorflow.examples.tutorials import mnist
 import os
 import sys
 from infogan.misc.utils import get_image
+from joblib import Parallel, delayed
+import multiprocessing
 
 
 class Dataset(object):
@@ -75,11 +77,11 @@ class Dataset(object):
                 for line in ff.readlines():
                     if 'txt' not in line:
                         split_line = line.strip().split(' ')
-                        self.image_list[split].append(split_line[0]) # path to the image
+                        self.image_list[split].append(split_line[0])  # path to the image
                         if len(split_line) > 1:
-                            self.labels[split].append(split_line[1]) # real label, if present
+                            self.labels[split].append(split_line[1])  # real label, if present
                         else:
-                            self.labels[split].append(None) # Junk label (None)
+                            self.labels[split].append(None)  # Junk label (None)
 
                 self.batch_idx[split] = len(self.image_list[split]) // self.batch_size
                 self.counter[split] = 0
@@ -137,14 +139,17 @@ class Dataset(object):
             batch_labels = self.labels[split][start_idx:end_idx]
             if end_idx == -1:
                 rand_idx = np.random.randint(low=0, high=len(self.image_list[split]), size=extra)
-                extra_files = [self.image_list[split][rand_idx[idx]] for idx in range(extra)]
-                extra_labels = [self.labels[split][rand_idx[idx]] for idx in range(extra)]
+                extra_files = [self.image_list[split][rand_idx[ii]] for ii in range(extra)]
+                extra_labels = [self.labels[split][rand_idx[ii]] for ii in range(extra)]
                 self.batch_files = self.batch_files + extra_files
                 batch_labels = batch_labels + extra_labels
                 assert len(self.batch_files) == self.batch_size
-            #if self.labels:
-            #    self.batch_labels = self.label[idx*self.batch_size:(idx+1)*self.batch_size]
-            batch = [get_image(os.path.join(self.data_root, batch_file), is_crop=self.is_crop, resize_w=self.output_size) for batch_file in self.batch_files]
+
+            with Parallel(n_jobs=multiprocessing.cpu_count()) as parallel:
+                batch = parallel(delayed(get_image)
+                                 (os.path.join(self.data_root, batch_file), is_crop=self.is_crop, resize_w=self.output_size)
+                                 for batch_file in self.batch_files)
+
             self.counter[split] = (self.counter[split]+1) % self.batch_idx[split]
 
             if (self.is_grayscale):
