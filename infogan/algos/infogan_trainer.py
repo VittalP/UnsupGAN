@@ -304,7 +304,7 @@ class InfoGANTrainer(object):
         pred_labels = np.array([], dtype=np.int16).reshape(0,)
         pred_labels_kmeans = np.array([], dtype=np.int16).reshape(0,)
         labels = []
-        n_clusters = self.dataset.n_labels
+        n_clusters = self.val_dataset.n_labels
         if self.model.is_reg is True and self.model.encoder_dim == n_clusters:
             predict_directly = True
         else:
