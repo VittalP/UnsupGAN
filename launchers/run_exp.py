@@ -13,8 +13,10 @@ import dateutil.tz
 import datetime
 
 flags = tf.app.flags
-flags.DEFINE_string("dataset", "celebA", "The name of dataset in ./data")
+flags.DEFINE_string("train_dataset", "cifar", "The name of dataset in ./data")
+flags.DEFINE_string("val_dataset", "cifar", "The name of dataset in ./data")
 flags.DEFINE_integer("output_size", 64, "Size of the images to generate")
+flags.DEFINE_integer("categories", None, "Size of the images to generate")
 flags.DEFINE_integer("batch_size", 128, "Size of the images to generate")
 flags.DEFINE_bool("train", True, "Training mode or testing mode")
 flags.DEFINE_string("exp_name", None, "Used to load model")
@@ -25,15 +27,18 @@ if __name__ == "__main__":
     now = datetime.datetime.now(dateutil.tz.tzlocal())
     timestamp = now.strftime('%Y_%m_%d_%H_%M_%S')
 
-    root_log_dir = "logs/" + FLAGS.dataset
-    root_checkpoint_dir = "ckt/" + FLAGS.dataset
-    root_samples_dir = "samples/" + FLAGS.dataset
+    root_log_dir = "logs/" + FLAGS.train_dataset
+    root_checkpoint_dir = "ckt/" + FLAGS.train_dataset
+    root_samples_dir = "samples/" + FLAGS.train_dataset
     batch_size = FLAGS.batch_size
     updates_per_epoch = 100
     max_epoch = 50
 
     if not FLAGS.exp_name:
-        exp_name = "%s_%s" % (FLAGS.dataset, timestamp)
+        exp_name = "t-%s_v-%s_o-%d" % (FLAGS.train_dataset, FLAGS.val_dataset, FLAGS.output_size)
+        if FLAGS.categories is not None:
+            exp_name = exp_name + "_c-%d" % (FLAGS.categories)
+        exp_name = exp_name + "_%s" % (timestamp)
     else:
         exp_name = FLAGS.exp_name
 
@@ -49,21 +54,23 @@ if __name__ == "__main__":
 
     output_dist = None
     network_type = 'dcgan'
-    if FLAGS.dataset == "mnist":
+    if FLAGS.train_dataset == "mnist":
         dataset = datasets.MnistDataset()
         output_dist = MeanBernoulli(dataset.image_dim)
         network_type = 'mnist'
         dataset.batch_idx = 100
     else:
-        dataset = datasets.Dataset(name=FLAGS.dataset, batch_size=batch_size,
+        dataset = datasets.Dataset(name=FLAGS.train_dataset, batch_size=batch_size,
                                    output_size=FLAGS.output_size)
-    val_dataset = datasets.Dataset(name='cifar', batch_size=batch_size,
+    val_dataset = datasets.Dataset(name=FLAGS.val_dataset, batch_size=batch_size,
                                    output_size=FLAGS.output_size)
 
     latent_spec = [
-        (Uniform(100), False),
-        (Categorical(50), True)
+        (Uniform(100), False)
     ]
+    if FLAGS.categories is not None:
+        latent_spec.append((Categorical(FLAGS.categories), True))
+
 
     is_reg = False
     for x, y in latent_spec:
