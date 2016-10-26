@@ -16,8 +16,9 @@ class Dataset(object):
             print "Need to provide a dataset name"
             sys.exit(1)
 
-        self.supported_datasets = ['celebA', 'imagenet', 'cifar']
+        self.supported_datasets = ['celebA', 'imagenet', 'cifar', 'cifar100']
         if name not in self.supported_datasets:
+            print "Dataset not supported"
             return NotImplementedError
 
         self.name = name
@@ -28,17 +29,13 @@ class Dataset(object):
             self.data_root = './data/' + name
 
         self.isVal = isVal
-        if self.name in ['cifar']:
+        if self.name in ['cifar', 'cifar100']:
             self.isVal = True
 
         if self.isVal is True:
             keys = ['train', 'val']
         else:
             keys = ['train']
-
-        self.n_labels = None
-        if self.name == 'cifar':
-            self.n_labels = 10
 
         self.list_file = dict.fromkeys(keys)
         self.image_list = {key: list() for key in keys}
@@ -48,7 +45,11 @@ class Dataset(object):
 
         if list_file is None:
             for key in self.list_file.keys():
-                self.list_file[key] = os.path.join(self.data_root, key + '_shuffle.txt')
+                if self.name == 'cifar100':
+                    suffix = '_coarse'
+                else:
+                    suffix = ''
+                self.list_file[key] = os.path.join(self.data_root, key + suffix + '_shuffle.txt')
         else:
             self.list_file = list_file
 
@@ -79,12 +80,14 @@ class Dataset(object):
                         split_line = line.strip().split(' ')
                         self.image_list[split].append(split_line[0])  # path to the image
                         if len(split_line) > 1:
-                            self.labels[split].append(split_line[1])  # real label, if present
+                            self.labels[split].append(int(split_line[1]))  # real label, if present
                         else:
                             self.labels[split].append(None)  # Junk label (None)
 
                 self.batch_idx[split] = len(self.image_list[split]) // self.batch_size
                 self.counter[split] = 0
+
+        self.n_labels = max(self.labels['train'])  # works even with None
 
     @property
     def images(self):
