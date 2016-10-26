@@ -35,7 +35,8 @@ if __name__ == "__main__":
     max_epoch = 50
 
     if not FLAGS.exp_name:
-        exp_name = "t-%s_v-%s_o-%d" % (FLAGS.train_dataset, FLAGS.val_dataset, FLAGS.output_size)
+        exp_name = "t-%s_v-%s_o-%d" % (FLAGS.train_dataset, FLAGS.val_dataset,
+                                       FLAGS.output_size)
         if FLAGS.categories is not None:
             exp_name = exp_name + "_c-%d" % (FLAGS.categories)
         exp_name = exp_name + "_%s" % (timestamp)
@@ -60,9 +61,11 @@ if __name__ == "__main__":
         network_type = 'mnist'
         dataset.batch_idx = 100
     else:
-        dataset = datasets.Dataset(name=FLAGS.train_dataset, batch_size=batch_size,
+        dataset = datasets.Dataset(name=FLAGS.train_dataset,
+                                   batch_size=batch_size,
                                    output_size=FLAGS.output_size)
-    val_dataset = datasets.Dataset(name=FLAGS.val_dataset, batch_size=batch_size,
+    val_dataset = datasets.Dataset(name=FLAGS.val_dataset,
+                                   batch_size=batch_size,
                                    output_size=FLAGS.output_size)
 
     latent_spec = [
@@ -70,7 +73,6 @@ if __name__ == "__main__":
     ]
     if FLAGS.categories is not None:
         latent_spec.append((Categorical(FLAGS.categories), True))
-
 
     is_reg = False
     for x, y in latent_spec:
