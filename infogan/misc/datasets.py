@@ -87,15 +87,11 @@ class Dataset(object):
                 self.batch_idx[split] = len(self.image_list[split]) // self.batch_size
                 self.counter[split] = 0
 
-        self.n_labels = max(self.labels['train'])  # works even with None
+        self.n_labels = len(set(self.labels['train']))
 
     @property
     def images(self):
         return self._images
-
-    # @property
-    # def labels(self):
-    #     return self._labels
 
     @property
     def num_examples(self):
