@@ -7,7 +7,7 @@ from infogan.misc.distributions import Bernoulli, Gaussian, Categorical
 import sys
 import os
 import time
-from infogan.misc.utils import save_images, inverse_transform, compute_rand_score
+from infogan.misc.utils import save_images, inverse_transform, compute_cluster_scores
 TINY = 1e-8
 
 
@@ -349,6 +349,6 @@ class InfoGANTrainer(object):
             pred_labels_kmeans = np.concatenate((pred_labels_kmeans, batch_pred_labels_kmeans))
 
         if predict_directly:
-            compute_rand_score(labels=np.asarray(labels), pred_labels=pred_labels, path=os.path.join(self.log_dir, 'rand.txt'))
+            compute_cluster_scores(labels=np.asarray(labels), pred_labels=pred_labels, path=os.path.join(self.log_dir, 'scores.txt'))
 
-        compute_rand_score(labels=np.asarray(labels), pred_labels=pred_labels_kmeans, path=os.path.join(self.log_dir, 'rand_kmeans.txt'))
+        compute_cluster_scores(labels=np.asarray(labels), pred_labels=pred_labels_kmeans, path=os.path.join(self.log_dir, 'scores_kmeans.txt'))

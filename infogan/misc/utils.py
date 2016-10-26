@@ -89,8 +89,9 @@ def transform(image, is_crop=True, resize_w=64):
     return np.array(cropped_image)/127.5 - 1.
 
 
-def compute_rand_score(labels, pred_labels, path):
+def compute_cluster_scores(labels, pred_labels, path):
     assert len(labels) == len(pred_labels)
     rand_score = metrics.adjusted_rand_score(labels, pred_labels)
+    nmi_score = metrics.normalized_mutual_info_score(labels, pred_labels)
     with open(path, 'a') as rr:
-        rr.write("%f\n" % (rand_score))
+        rr.write("%4.4f %4.4f\n" % (rand_score, nmi_score))
