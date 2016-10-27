@@ -91,12 +91,24 @@ class dcgan_net():
         shared_template = \
             (pt.template("input").
              reshape([-1] + list(self.image_shape)).
+             custom_conv2d(self.df_dim, name='d_h0_1_conv', d_h=1, d_w=1, k_h=self.k_h, k_w=self.k_w).
+             apply(leaky_rectify).
              custom_conv2d(self.df_dim, name='d_h0_conv', k_h=self.k_h, k_w=self.k_w).
+             conv_batch_norm().
+             apply(leaky_rectify).
+             custom_conv2d(self.df_dim*2, name='d_h1_1_conv', d_h=1, d_w=1, k_h=self.k_h, k_w=self.k_w).
+             conv_batch_norm().
              apply(leaky_rectify).
              custom_conv2d(self.df_dim*2, name='d_h1_conv', k_h=self.k_h, k_w=self.k_w).
              conv_batch_norm().
              apply(leaky_rectify).
+             custom_conv2d(self.df_dim*4, name='d_h2_1_conv', d_h=1, d_w=1, k_h=self.k_h, k_w=self.k_w).
+             conv_batch_norm().
+             apply(leaky_rectify).
              custom_conv2d(self.df_dim*4, name='d_h2_conv', k_h=self.k_h, k_w=self.k_w).
+             conv_batch_norm().
+             apply(leaky_rectify).
+             custom_conv2d(self.df_dim*8, name='d_h3_1_conv', d_h=1, d_w=1, k_h=self.k_h, k_w=self.k_w).
              conv_batch_norm().
              apply(leaky_rectify).
              custom_conv2d(self.df_dim*8, name='d_h3_conv', k_h=self.k_h, k_w=self.k_w).
