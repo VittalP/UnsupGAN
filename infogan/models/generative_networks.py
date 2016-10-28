@@ -50,9 +50,6 @@ class dcgan_net():
              fc_batch_norm().
              apply(tf.nn.relu).
              reshape([-1, s16, s16, self.gf_dim * 8]).
-             custom_conv2d(self.gf_dim*4, name='g_h0_1_conv', d_h=1, d_w=1, k_h=self.k_h, k_w=self.k_w).
-             conv_batch_norm().
-             apply(tf.nn.relu).
              custom_deconv2d([self.batch_size, s8, s8, self.gf_dim*4], name='g_h1', k_h=self.k_h, k_w=self.k_w).
              conv_batch_norm().
              apply(tf.nn.relu).
