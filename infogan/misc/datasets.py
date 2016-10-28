@@ -144,7 +144,7 @@ class Dataset(object):
                 batch_labels = batch_labels + extra_labels
                 assert len(self.batch_files) == self.batch_size
 
-            with Parallel(n_jobs=multiprocessing.cpu_count()) as parallel:
+            with Parallel(n_jobs=1) as parallel:
                 batch = parallel(delayed(get_image)
                                  (os.path.join(self.data_root, batch_file), is_crop=self.is_crop, resize_w=self.output_size)
                                  for batch_file in self.batch_files)
