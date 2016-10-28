@@ -261,7 +261,7 @@ class InfoGANTrainer(object):
                         x, _ = self.dataset.next_batch(self.batch_size)
                     feed_dict = {self.input_tensor: x}
                     all_log_vals = sess.run([self.discriminator_trainer] + log_vars, feed_dict)[1:]
-                    for ii in range(2):
+                    for ii in range(5):
                         sess.run(self.generator_trainer, feed_dict)
                     counter += 1
 
