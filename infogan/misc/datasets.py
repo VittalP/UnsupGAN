@@ -16,7 +16,7 @@ class Dataset(object):
             print "Need to provide a dataset name"
             sys.exit(1)
 
-        self.supported_datasets = ['celebA', 'imagenet', 'cifar', 'cifar100']
+        self.supported_datasets = ['celebA', 'imagenet', 'cifar', 'cifar100', 'stl10']
         if name not in self.supported_datasets:
             print "Dataset not supported"
             return NotImplementedError
@@ -29,7 +29,7 @@ class Dataset(object):
             self.data_root = './data/' + name
 
         self.isVal = isVal
-        if self.name in ['cifar', 'cifar100']:
+        if self.name in ['cifar', 'cifar100', 'stl10']:
             self.isVal = True
 
         if self.isVal is True:
