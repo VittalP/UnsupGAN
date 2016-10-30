@@ -68,9 +68,9 @@ class RegularizedGAN(object):
                     self.gen_model = G.dcgan_net()
                 elif self.network_type == 'deeper_dcgan':
                     self.gen_model = G.deeper_dcgan_net()
-                self.generator_template = self.gen_model.gen_net(self.image_shape)
                 else:
                     raise NotImplementedError
+                self.generator_template = self.gen_model.gen_net(self.image_shape)
 
     def discriminate(self, x_var):
         d_features = self.shared_template.construct(input=x_var)
