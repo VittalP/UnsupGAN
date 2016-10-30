@@ -60,6 +60,7 @@ class InfoGAN_MNIST_net():
              custom_fully_connected(self.encoder_dim))
         return encoder_template
 
+
 class dcgan_net():
     def __init__(self, image_shape=64, is_reg=False, encoder_dim=None):
         self.df_dim = 64
@@ -70,12 +71,12 @@ class dcgan_net():
         else:
             self.k_h = self.k_w = 5
 
-        self._shared_template = self.dcgan_shared_net()
+        self._shared_template = self.shared_net()
         self.is_reg = is_reg
         self.encoder_dim = encoder_dim
 
         if self.is_reg:
-            self._encoder_template = self.dcgan_encoder_net()
+            self._encoder_template = self.encoder_net()
         else:
             self._encoder_template = None
 
@@ -87,7 +88,61 @@ class dcgan_net():
     def encoder_template(self):
         return self._encoder_template
 
-    def dcgan_shared_net(self):
+    def shared_net(self):
+        shared_template = \
+            (pt.template("input").
+             reshape([-1] + list(self.image_shape)).
+             custom_conv2d(self.df_dim, name='d_h0_conv', k_h=self.k_h, k_w=self.k_w).
+             apply(leaky_rectify).
+             custom_conv2d(self.df_dim*2, name='d_h1_conv', k_h=self.k_h, k_w=self.k_w).
+             conv_batch_norm().
+             apply(leaky_rectify).
+             custom_conv2d(self.df_dim*4, name='d_h2_conv', k_h=self.k_h, k_w=self.k_w).
+             conv_batch_norm().
+             apply(leaky_rectify).
+             custom_conv2d(self.df_dim*8, name='d_h3_conv', k_h=self.k_h, k_w=self.k_w).
+             conv_batch_norm().
+             apply(leaky_rectify))
+        return shared_template
+
+    def encoder_net(self):
+        encoder_template = \
+            (self._shared_template.
+             custom_fully_connected(512).
+             fc_batch_norm().
+             apply(leaky_rectify).
+             custom_fully_connected(self.encoder_dim))
+        return encoder_template
+
+
+class deeper_dcgan_net():
+    def __init__(self, image_shape=64, is_reg=False, encoder_dim=None):
+        self.df_dim = 64
+        self.image_shape = image_shape
+
+        if self.image_shape[0] == 32:
+            self.k_h = self.k_w = 3
+        else:
+            self.k_h = self.k_w = 5
+
+        self._shared_template = self.shared_net()
+        self.is_reg = is_reg
+        self.encoder_dim = encoder_dim
+
+        if self.is_reg:
+            self._encoder_template = self.encoder_net()
+        else:
+            self._encoder_template = None
+
+    @property
+    def shared_template(self):
+        return self._shared_template
+
+    @property
+    def encoder_template(self):
+        return self._encoder_template
+
+    def shared_net(self):
         shared_template = \
             (pt.template("input").
              reshape([-1] + list(self.image_shape)).
@@ -116,7 +171,7 @@ class dcgan_net():
              apply(leaky_rectify))
         return shared_template
 
-    def dcgan_encoder_net(self):
+    def encoder_net(self):
         encoder_template = \
             (self._shared_template.
              custom_fully_connected(512).
