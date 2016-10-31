@@ -59,7 +59,7 @@ with tf.Session() as sess:
             summary_str = sess.run(summary_op, {input_tensor: x, label_tensor: labels})
             summary_writer.add_summary(summary_str, counter)
 
-            if counter % 1 == 0:
+            if counter % 500 == 0:
                 print "validating..."
                 pred_labels = np.array([], dtype=np.int16).reshape(0,)
                 pred_labels_kmeans = np.array([], dtype=np.int16).reshape(0,)
@@ -92,7 +92,7 @@ with tf.Session() as sess:
                 for ii in range(val_dataset.batch_idx['val']):
                     x, batch_labels = val_dataset.next_batch(batch_size=batch_size, split="val")
                     feed_dict = {input_tensor: x}
-                    d_out = sess.run([d_features, d_prob], {input_tensor: x})
+                    d_out = sess.run([d_feat, d_prob], {input_tensor: x})
                     d_features = d_out[0]
                     pred_prob = d_out[1]
                     batch_pred_labels = np.argmax(pred_prob, axis=1)
