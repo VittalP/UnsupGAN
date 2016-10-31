@@ -57,7 +57,6 @@ class RegularizedGAN(object):
                 self.discriminator_template = self.shared_template.custom_fully_connected(1)
                 self.encoder_template = self.D_model.encoder_template
 
-
     def set_G_net(self):
         with tf.variable_scope("g_net"):
             if self.network_type == 'mnist':
