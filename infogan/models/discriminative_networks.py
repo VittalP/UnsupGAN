@@ -102,6 +102,8 @@ class dcgan_net():
              apply(leaky_rectify).
              custom_conv2d(self.df_dim*8, name='d_h3_conv', k_h=self.k_h, k_w=self.k_w).
              conv_batch_norm().
+             apply(leaky_rectify).
+             custom_fully_connected(1024).
              apply(leaky_rectify))
         return shared_template
 
