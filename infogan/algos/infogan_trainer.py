@@ -313,10 +313,11 @@ class InfoGANTrainer(object):
         trainX = np.array([]).reshape(0, 0)
 
         def pool_features(feat, pool_type='avg'):
-            if pool_type == 'avg':
-                feat = feat.mean(axis=(1, 2))
-            if pool_type == 'max':
-                feat = feat.mean(axis=(1, 2))
+            if len(feat.shape) >= 3:
+                if pool_type == 'avg':
+                    feat = feat.mean(axis=(1, 2))
+                if pool_type == 'max':
+                    feat = feat.mean(axis=(1, 2))
             return feat.reshape((feat.shape[0], feat.shape[-1]))
 
         print "Getting all the training features."
