@@ -35,7 +35,7 @@ if __name__ == "__main__":
     max_epoch = 50
 
     if not FLAGS.exp_name:
-        exp_name = "t-%s_v-%s_o-%d" % (FLAGS.train_dataset, FLAGS.val_dataset,
+        exp_name = "fc-t-%s_v-%s_o-%d" % (FLAGS.train_dataset, FLAGS.val_dataset,
                                        FLAGS.output_size)
         if FLAGS.categories is not None:
             exp_name = exp_name + "_c-%d" % (FLAGS.categories)
