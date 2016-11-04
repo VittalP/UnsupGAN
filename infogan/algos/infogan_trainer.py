@@ -8,6 +8,8 @@ import sys
 import os
 import time
 from infogan.misc.utils import save_images, inverse_transform, compute_cluster_scores
+from sklearn.preprocessing import normalize
+
 TINY = 1e-8
 
 
@@ -329,10 +331,10 @@ class InfoGANTrainer(object):
                 trainX = d_features
             else:
                 trainX = np.concatenate((trainX, d_features), axis=0)
+        trainX_norm = normalize(trainX, axis=1, norm='l2')
         print "Learning the clusters."
         from sklearn.cluster import KMeans
-        kmeans = KMeans(n_clusters=n_clusters, init='k-means++').fit(trainX)
-
+        kmeans = KMeans(n_clusters=n_clusters, init='k-means++').fit(trainX_norm)
         print "Extracting features from val set and predicting from it."
         for ii in range(self.val_dataset.batch_idx['val']):
             x, batch_labels = self.val_dataset.next_batch(self.batch_size, split="val")
@@ -345,7 +347,8 @@ class InfoGANTrainer(object):
 
             d_features = sess.run(self.d_feat_real, {self.input_tensor: x})
             d_features = pool_features(d_features, pool_type='avg')
-            batch_pred_labels_kmeans = kmeans.predict(d_features)
+            d_features_norm = normalize(d_features, axis=1, norm='l2')
+            batch_pred_labels_kmeans = kmeans.predict(d_features_norm)
 
             pred_labels_kmeans = np.concatenate((pred_labels_kmeans, batch_pred_labels_kmeans))
 
