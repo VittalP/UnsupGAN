@@ -1,3 +1,7 @@
+
+# Instructions on how to use UnsupGAN will be made available soon...
+
+
 # InfoGAN
 
 Code for reproducing key results in the paper [InfoGAN: Interpretable Representation Learning by Information Maximizing Generative Adversarial Nets](https://arxiv.org/abs/1606.03657) by Xi Chen, Yan Duan, Rein Houthooft, John Schulman, Ilya Sutskever, Pieter Abbeel.
